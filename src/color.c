@@ -1,27 +1,39 @@
+/* 
+ * color.c - Erstellen von Farben
+ *
+ * Copyright 2004 Johannes Weißl
+ *
+ * This file is part of rdecay.
+ *
+ * rdecay is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * rdecay is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with rdecay; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
 #include <gtk/gtk.h>
 
 #include "color.h"
 
 #define RGB (65535 / 255)
 
-GdkColor *color_new(GtkWidget *widget, gint red, gint green, gint blue)
+/* erstellt eine neue Farbe aus drei Farbwerten */
+GdkColor color_new(gint red, gint green, gint blue)
 {
-    GdkColor *color;
+    GdkColor color;
 
-    color = (GdkColor *) g_malloc(sizeof(GdkColor));
-
-    color->red = red * RGB;
-    color->green = green * RGB;
-    color->blue = blue * RGB;
-
-    color->pixel = (gulong) (red * 65536 + green * 256 + blue);
-
-    gdk_color_alloc(gtk_widget_get_colormap(widget), color);
+    color.red = red * RGB;
+    color.green = green * RGB;
+    color.blue = blue * RGB;
 
     return color;
-}
-
-void color_free(GdkColor *color)
-{
-    gdk_color_free(color);
 }

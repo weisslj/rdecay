@@ -37,6 +37,7 @@ AM_GNU_GETTEXT
 
 # Checks for libraries.
 PKG_CHECK_MODULES(GTK, gtk+-2.0)
+GTK_CFLAGS="$GTK_CFLAGS -DGTK_DISABLE_DEPRECATED"
 if test $platform = "windows" ; then
         GTK_CFLAGS="$GTK_CFLAGS -mms-bitfields -mno-cygwin -mwindows"
 fi

@@ -1,7 +1,30 @@
-#include <stdarg.h>
+/* 
+ * status.c - die Statusanzeige
+ *
+ * Copyright 2004 Johannes Weißl
+ *
+ * This file is part of rdecay.
+ *
+ * rdecay is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * rdecay is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with rdecay; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
 #include <gtk/gtk.h>
+#include <stdarg.h>
 
 #include "status.h"
+#include "sim.h"
 
 #if HAVE_CONFIG_H
 #include <config.h>
@@ -11,6 +34,37 @@
 #define _(String) gettext (String)
 #define N_(String) gettext_noop (String)
 
+/* die statische Liste der Atomnamen */
+static const gchar *atom_names[] = {
+    N_("mother"),
+    N_("doughter"),
+    N_("grandchild")
+};
+
+static gint label_printf(GtkWidget *label, const gchar *format, ...);
+
+/* gibt den Namen des Atoms mit der Nummer "state" zurück */
+G_CONST_RETURN gchar *get_atom_name(gint state)
+{
+    return atom_names[state];
+}
+
+/* aktualisiert die Statusanzeige der Atome */
+void status_update_atoms(GtkWidget **label_atom, gint *atoms)
+{
+    gint i;
+
+    for (i = 0; i < ATOM_STATES; i++)
+        label_printf(label_atom[i], _("%s atoms: %d"), atom_names[i], atoms[i]);
+}
+
+/* aktualisiert die Statusanzeige der Zeit */
+void status_update_time(GtkWidget *label_time, gdouble time)
+{
+    label_printf(label_time, _("time: %.2f"), time);
+}
+
+/* schreibt auf ein GtkLabel wie mit printf */
 static gint label_printf(GtkWidget *label, const gchar *format, ...)
 {
     gchar *text;
@@ -27,62 +81,4 @@ static gint label_printf(GtkWidget *label, const gchar *format, ...)
     g_free(text);
 
     return 1;
-}
-
-GtkWidget *create_status_field(GtkWidget *parent_box)
-{
-    GtkWidget *top, *box, *l1, *l2, *l3, *ltime;
-
-    top = gtk_widget_get_toplevel(parent_box);
-
-    box = gtk_vbox_new(FALSE, 20);
-    gtk_box_pack_start(GTK_BOX(parent_box), box, FALSE, FALSE, 20);
-
-    l1 = gtk_label_new(_("mother atoms: -"));
-    l2 = gtk_label_new(_("doughter atoms: -"));
-    l3 = gtk_label_new(_("grandchild atoms: -"));
-    ltime = gtk_label_new(_("time: -"));
-
-    gtk_box_pack_start(GTK_BOX(box), l1, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(box), l2, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(box), l3, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(box), ltime, FALSE, FALSE, 0);
-
-   g_object_set_data(G_OBJECT(top), "1_status", l1);
-    g_object_set_data(G_OBJECT(top), "2_status", l2);
-    g_object_set_data(G_OBJECT(top), "3_status", l3);
-    g_object_set_data(G_OBJECT(top), "time_status", ltime);
-
-    gtk_widget_show(l1);
-    gtk_widget_show(l2);
-    gtk_widget_show(l3);
-    gtk_widget_show(ltime);
-    gtk_widget_show(box);
-
-    return box;
-}
-
-void update_status_atoms(GtkWidget *widget, gint n1, gint n2, gint n3)
-{
-    GtkWidget *top, *l1, *l2, *l3;
-
-    top = gtk_widget_get_toplevel(widget);
-
-    l1 = g_object_get_data(G_OBJECT(top), "1_status");
-    l2 = g_object_get_data(G_OBJECT(top), "2_status");
-    l3 = g_object_get_data(G_OBJECT(top), "3_status");
-
-    label_printf(l1, _("mother atoms: %d"), n1);
-    label_printf(l2, _("doughter atoms: %d"), n2);
-    label_printf(l3, _("grandchild atoms: %d"), n3);
-}
-
-void update_status_time(GtkWidget *widget, gdouble time)
-{
-    GtkWidget *top, *ltime;
-
-    top = gtk_widget_get_toplevel(widget);
-
-    ltime = g_object_get_data(G_OBJECT(top), "time_status");
-    label_printf(ltime, _("time: %.3f"), time);
 }

@@ -1,12 +1,35 @@
+/* 
+ * timer.c - Zeitmessung
+ *
+ * Copyright 2004 Johannes Weißl
+ *
+ * This file is part of rdecay.
+ *
+ * rdecay is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * rdecay is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with rdecay; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
 #include <glib.h>
 
 #include "timer.h"
 
+/* erstellt einen neuen Timer und startet ihn */
 MyTimer *timer_new(void)
 {
     MyTimer *timer;
 
-    timer = g_malloc(sizeof(MyTimer));
+    timer = (MyTimer *) g_malloc(sizeof(MyTimer));
     timer->gtimer = g_timer_new();
     timer->stopped = 0;
     timer->tbuf = 0;
@@ -14,6 +37,14 @@ MyTimer *timer_new(void)
     return timer;
 }
 
+/* stellt den Speicher für den Timer wieder zur Verfügung */
+void timer_free(MyTimer *timer)
+{
+    g_timer_destroy(timer->gtimer);
+    g_free(timer);
+}
+
+/* gibt die Zeit in Sekunden zurück, die seit dem Start vergangen ist */
 gdouble timer_elapsed(MyTimer *timer)
 {
     /*
@@ -28,6 +59,7 @@ gdouble timer_elapsed(MyTimer *timer)
     return (g_timer_elapsed(timer->gtimer, NULL) - timer->tbuf);
 }
 
+/* startet den Timer */
 void timer_start(MyTimer *timer)
 {
     /*
@@ -39,6 +71,7 @@ void timer_start(MyTimer *timer)
     timer->stopped = 0;
 }
 
+/* stoppt den Timer */
 void timer_stop(MyTimer *timer)
 {
     /*
@@ -48,6 +81,7 @@ void timer_stop(MyTimer *timer)
     timer->stopped = g_timer_elapsed(timer->gtimer, NULL) - timer->tbuf;
 }
 
+/* setzt den Timer auf Null zurück */
 void timer_reset(MyTimer *timer)
 {
     /*
@@ -59,13 +93,8 @@ void timer_reset(MyTimer *timer)
     timer->stopped = 1;
 }
 
+/* überprüft, ob der Timer zur Zeit läuft */
 gboolean timer_is_running(MyTimer *timer)
 {
     return (timer->stopped) ? FALSE : TRUE;
-}
-
-void timer_free(MyTimer *timer)
-{
-    g_timer_destroy(timer->gtimer);
-    g_free(timer);
 }

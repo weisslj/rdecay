@@ -1,35 +1,65 @@
-#include <gtk/gtk.h>
+/* 
+ * afield.c - das Atomfeld
+ *
+ * Copyright 2004 Johannes Weißl
+ *
+ * This file is part of rdecay.
+ *
+ * rdecay is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * rdecay is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with rdecay; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#include <glib.h>
 #include <gsl/gsl_rng.h>
 #include <math.h>
 
-#include "atoms.h"
 #include "afield.h"
-#include "ui_afield.h"
-#include "input.h"
 
 static void copy_coord(AtomCoord *a, AtomCoord *b);
+static gint count_atoms(AtomField *af, gint state);
 
+/* erstellt ein neues Atomfeld */
 AtomField *afield_new(gint number, gint field_width, gint field_height)
 {
+    gint i;
     AtomField *af;
 
+    /* reserviert Speicher */
     af = (AtomField *) g_malloc(sizeof(AtomField));
     af->coords = (AtomCoord *) g_malloc(number * sizeof(AtomCoord));
 
+    /* speichert die Anzahl der Atome */
     af->number = number;
 
+    /* setzt den Status auf Null */
+    for (i = 0; i < number; i++)
+        (af->coords + i)->state = 0;
+
+    /* richtet die Atome aus */
     afield_arrange(af, field_width, field_height);
 
     return af;
 }
 
+/* gibt den Speicher eines erstellten Atomfelds frei */
 void afield_free(AtomField *af)
 {
     g_free(af->coords);
     g_free(af);
 }
 
-/* Ordnet die Liste der Atome zufällig neu an */
+/* ordnet die Liste der Atome zufällig neu an */
 void afield_randomize(AtomField *af, gsl_rng *rand)
 {
     gint i, rand_x, *index_numbers;
@@ -68,6 +98,40 @@ void afield_randomize(AtomField *af, gsl_rng *rand)
     g_free(index_numbers);
 }
 
+void afield_distrib_decays(gint decays, AtomField *af,
+                           gint atoms, gint state,
+                           gsl_rng *rand)
+{
+    gint i;
+
+    for (i = 0; i < decays; i++) {
+        afield_distrib_decay(af, state, rand);
+        atoms--;
+    }
+}
+
+gint afield_distrib_decay(AtomField *af, gint state, gsl_rng *rand)
+{
+    gint atoms, hit, i, n;
+
+    atoms = count_atoms(af, state);
+    hit = gsl_rng_uniform_int(rand, atoms);
+
+    n = 0;
+    for (i = 0; i < af->number; i++) {
+        if ((af->coords + i)->state == state) {
+            if (n == hit) {
+                (af->coords + i)->state++;
+                return i;
+            }
+            n++;
+        }
+    }
+    return -1;
+}
+            
+
+/* ordnet die Atome im Atomfeld an */
 void afield_arrange(AtomField *af, gint field_width, gint field_height)
 {
     gdouble n_root, f_aspect, rows_raw, cols_raw;
@@ -103,7 +167,6 @@ void afield_arrange(AtomField *af, gint field_width, gint field_height)
     i = 0;
     for (col = 0; col < cols && i < af->number; col++) {
         for (row = 0; row < rows && i < af->number; row++) {
-            (af->coords + i)->state = 0;
             (af->coords + i)->x = row * af->wide;
             (af->coords + i)->y = col * af->wide;
             i++;
@@ -111,16 +174,24 @@ void afield_arrange(AtomField *af, gint field_width, gint field_height)
     }
 }
 
-void afield_draw(GtkWidget *darea, AtomField *af)
-{
-    gint i;
-    for (i = 0; i < af->number; i++)
-        draw_atom(darea, (af->coords + i), af->wide);
-}
-
+/* kopiert die Werte der Atomkoordinate b in a */
 static void copy_coord(AtomCoord *a, AtomCoord *b)
 {
     a->state = b->state;
     a->x = b->x;
     a->y = b->y;
+}
+
+/* FIXME */
+static gint count_atoms(AtomField *af, gint state)
+{
+    gint i, n;
+
+    n = 0;
+    for (i = 0; i < af->number; i++) {
+        if ((af->coords + i)->state == state)
+            n++;
+    }
+
+    return n;
 }

@@ -2,7 +2,6 @@ bin_PROGRAMS = rdecay
 rdecay_SOURCES = \
     main.c        \
     gettext.h     \
-    topwin.c      topwin.h    \
     afield.c      afield.h    \
     coord.c       coord.h     \
     graph.c       graph.h     \
@@ -10,7 +9,6 @@ rdecay_SOURCES = \
     ui_afield.c   ui_afield.h \
     ui_graph.c    ui_graph.h  \
     darea.c       darea.h     \
-    input.c       input.h     \
     status.c      status.h    \
     timer.c       timer.h     \
     random.c      random.h    \

@@ -1,0 +1,289 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\usepackage{color}
+\usepackage{alltt}
+\newcommand{\hlstd}[1]{\textcolor[rgb]{0,0,0}{#1}}
+\newcommand{\hlkey}[1]{\textcolor[rgb]{0,0,0}{\bf{#1}}}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.16,0.16,1}{#1}}
+\newcommand{\hltyp}[1]{\textcolor[rgb]{0.51,0,0}{#1}}
+\newcommand{\hlesc}[1]{\textcolor[rgb]{1,0,1}{#1}}
+\newcommand{\hlstr}[1]{\textcolor[rgb]{1,0,0}{#1}}
+\newcommand{\hldstr}[1]{\textcolor[rgb]{0.51,0.51,0}{#1}}
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.51,0.51,0.51}{\it{#1}}}
+\newcommand{\hldir}[1]{\textcolor[rgb]{0,0.51,0}{#1}}
+\newcommand{\hlline}[1]{\textcolor[rgb]{0.33,0.33,0.33}{#1}}
+\begin{document}
+\definecolor{bgcolor}{rgb}{1,1,1}
+\pagecolor{bgcolor}
+\noindent
+\ttfamily
+\hlstd{\mbox{}\\
+}\hlline{\ \ \ 1\ }\hlstd{}\hldir{\#include\ $<$gtk/gtk.h$>$\mbox{}\\
+}\hlline{\ \ \ 2\ }\hldir{}\hlstd{}\hldir{\#include\ $<$math.h$>$\mbox{}\\
+}\hlline{\ \ \ 3\ }\hldir{}\hlstd{}\hldir{\#include\ $<$time.h$>$\mbox{}\\
+}\hlline{\ \ \ 4\ }\hldir{}\hlstd{}\hldir{\#include\ $<$gsl/gsl\textunderscore rng.h$>$\mbox{}\\
+}\hlline{\ \ \ 5\ }\hldir{}\hlstd{}\hldir{\#include\ $<$gsl/gsl\textunderscore randist.h$>$\mbox{}\\
+}\hlline{\ \ \ 6\ }\hldir{}\hlstd{\mbox{}\\
+}\hlline{\ \ \ 7\ }\hlstd{}\hldir{\#include\ }\hldstr{"sim.h"}\hldir{\mbox{}\\
+}\hlline{\ \ \ 8\ }\hldir{}\hlstd{}\hldir{\#include\ }\hldstr{"afield.h"}\hldir{\mbox{}\\
+}\hlline{\ \ \ 9\ }\hldir{}\hlstd{}\hldir{\#include\ }\hldstr{"graph.h"}\hldir{\mbox{}\\
+}\hlline{\ \ 10\ }\hldir{}\hlstd{}\hldir{\#include\ }\hldstr{"ui\textunderscore afield.h"}\hldir{\mbox{}\\
+}\hlline{\ \ 11\ }\hldir{}\hlstd{}\hldir{\#include\ }\hldstr{"ui\textunderscore graph.h"}\hldir{\mbox{}\\
+}\hlline{\ \ 12\ }\hldir{}\hlstd{}\hldir{\#include\ }\hldstr{"darea.h"}\hldir{\mbox{}\\
+}\hlline{\ \ 13\ }\hldir{}\hlstd{}\hldir{\#include\ }\hldstr{"status.h"}\hldir{\mbox{}\\
+}\hlline{\ \ 14\ }\hldir{}\hlstd{}\hldir{\#include\ }\hldstr{"timer.h"}\hldir{\mbox{}\\
+}\hlline{\ \ 15\ }\hldir{}\hlstd{}\hldir{\#include\ }\hldstr{"util.h"}\hldir{\mbox{}\\
+}\hlline{\ \ 16\ }\hldir{}\hlstd{}\hlcom{/*\mbox{}\\
+}\hlline{\ \ 17\ }\hlcom{\#include\ "sound.h"\mbox{}\\
+}\hlline{\ \ 18\ }\hlcom{*/}\hlstd{\mbox{}\\
+}\hlline{\ \ 19\ }\hlstd{}\hldir{\#if\ HAVE\textunderscore CONFIG\textunderscore H\mbox{}\\
+}\hlline{\ \ 20\ }\hldir{}\hlstd{}\hldir{\#include\ $<$config.h$>$\mbox{}\\
+}\hlline{\ \ 21\ }\hldir{}\hlstd{}\hldir{\#endif\mbox{}\\
+}\hlline{\ \ 22\ }\hldir{}\hlstd{\mbox{}\\
+}\hlline{\ \ 23\ }\hlstd{}\hldir{\#include\ }\hldstr{"gettext.h"}\hldir{\mbox{}\\
+}\hlline{\ \ 24\ }\hldir{}\hlstd{}\hldir{\#define\ \textunderscore (String)\ gettext\ (String)\mbox{}\\
+}\hlline{\ \ 25\ }\hldir{}\hlstd{}\hldir{\#define\ N\textunderscore (String)\ gettext\textunderscore noop\ (String)\mbox{}\\
+}\hlline{\ \ 26\ }\hldir{}\hlstd{\mbox{}\\
+}\hlline{\ \ 27\ }\hlstd{}\hltyp{static\ void\ }\hlstd{resume\textunderscore sim(GtkWidget\ *button,\ MyTimer\ *timer);\mbox{}\\
+}\hlline{\ \ 28\ }\hlstd{}\hltyp{static\ void\ }\hlstd{pause\textunderscore sim(GtkWidget\ *button,\ MyTimer\ *timer);\mbox{}\\
+}\hlline{\ \ 29\ }\hlstd{}\hltyp{static\ void\ }\hlstd{stop\textunderscore sim(GtkWidget\ *button,\ gint\ *quit);\mbox{}\\
+}\hlline{\ \ 30\ }\hlstd{\mbox{}\\
+}\hlline{\ \ 31\ }\hlstd{}\hltyp{static\ }\hlstd{gdouble\ calc\textunderscore duration(gint\ number,\ gdouble\ thalf);\mbox{}\\
+}\hlline{\ \ 32\ }\hlstd{}\hltyp{static\ }\hlstd{gdouble\ exp\textunderscore growth(gdouble\ t,\ SimData\ *data);\mbox{}\\
+}\hlline{\ \ 33\ }\hlstd{}\hltyp{static\ }\hlstd{gint\ decay\textunderscore real(gdouble\ t,\ gint\ n,\ gdouble\ thalf,\ gsl\textunderscore rng\ *rand);\mbox{}\\
+}\hlline{\ \ 34\ }\hlstd{\mbox{}\\
+}\hlline{\ \ 35\ }\hlstd{}\hltyp{static\ }\hlstd{gint\ decay\textunderscore stat(gdouble\ t,\ gint\ n,\ gint\ n0,\ gdouble\ thalf);\mbox{}\\
+}\hlline{\ \ 36\ }\hlstd{\mbox{}\\
+}\hlline{\ \ 37\ }\hlstd{}\hltyp{void\ }\hlstd{sim\textunderscore decay(GtkWidget\ *button\textunderscore start,\ gsl\textunderscore rng\ *rand)\mbox{}\\
+}\hlline{\ \ 38\ }\hlstd{\{\mbox{}\\
+}\hlline{\ \ 39\ }\hlstd{\hlstd{\hskip 8 mm}GtkWidget\ *top,\ **darea,\ *button\textunderscore stop,\mbox{}\\
+}\hlline{\ \ 40\ }\hlstd{\hlstd{\hskip 8 mm}*spin\textunderscore number,\ **spin\textunderscore htime,\mbox{}\\
+}\hlline{\ \ 41\ }\hlstd{\hlstd{\hskip 8 mm}**label\textunderscore atom,\ *label\textunderscore time;\mbox{}\\
+}\hlline{\ \ 42\ }\hlstd{\hlstd{\hskip 8 mm}gdouble\ t,\ thalf,\ tstart,\ tnext,\ told,\ tstep,\ tloop;\mbox{}\\
+}\hlline{\ \ 43\ }\hlstd{\mbox{}\\
+}\hlline{\ \ 44\ }\hlstd{\hlstd{\hskip 8 mm}CoordSystem\ *coord;\mbox{}\\
+}\hlline{\ \ 45\ }\hlstd{\hlstd{\hskip 8 mm}Graph\ **graph;\mbox{}\\
+}\hlline{\ \ 46\ }\hlstd{\hlstd{\hskip 8 mm}Point\ *point,\ *old\textunderscore point;\mbox{}\\
+}\hlline{\ \ 47\ }\hlstd{\mbox{}\\
+}\hlline{\ \ 48\ }\hlstd{\hlstd{\hskip 8 mm}MyTimer\ *timer;\mbox{}\\
+}\hlline{\ \ 49\ }\hlstd{\hlstd{\hskip 8 mm}gint\ quit;\mbox{}\\
+}\hlline{\ \ 50\ }\hlstd{\hlstd{\hskip 8 mm}gint\ number,\ pos,\ state,\ decays,\ i,\ a,\ b;\mbox{}\\
+}\hlline{\ \ 51\ }\hlstd{\hlstd{\hskip 8 mm}AtomField\ *afield;\mbox{}\\
+}\hlline{\ \ 52\ }\hlstd{\mbox{}\\
+}\hlline{\ \ 53\ }\hlstd{\hlstd{\hskip 8 mm}gulong\ *sig\textunderscore darea[N\textunderscore DAREAS];\mbox{}\\
+}\hlline{\ \ 54\ }\hlstd{\mbox{}\\
+}\hlline{\ \ 55\ }\hlstd{\hlstd{\hskip 8 mm}SimData\ *sdata;\mbox{}\\
+}\hlline{\ \ 56\ }\hlstd{\hlstd{\hskip 8 mm}GraphFunc\ *gf;\mbox{}\\
+}\hlline{\ \ 57\ }\hlstd{\mbox{}\\
+}\hlline{\ \ 58\ }\hlstd{\hlstd{\hskip 8 mm}top\ =\ gtk\textunderscore widget\textunderscore get\textunderscore toplevel(button\textunderscore start);\mbox{}\\
+}\hlline{\ \ 59\ }\hlstd{\mbox{}\\
+}\hlline{\ \ 60\ }\hlstd{\hlstd{\hskip 8 mm}}\hlcom{/*\ holt\ ein\ paar\ gespeicherte\ Widgets\ */}\hlstd{\mbox{}\\
+}\hlline{\ \ 61\ }\hlstd{\hlstd{\hskip 8 mm}button\textunderscore stop\ =\ g\textunderscore object\textunderscore get\textunderscore data(G\textunderscore OBJECT(top),\ }\hlstr{"button\textunderscore stop"}\hlstd{);\mbox{}\\
+}\hlline{\ \ 62\ }\hlstd{\hlstd{\hskip 8 mm}spin\textunderscore number\ =\ g\textunderscore object\textunderscore get\textunderscore data(G\textunderscore OBJECT(top),\ }\hlstr{"spin\textunderscore number"}\hlstd{);\mbox{}\\
+}\hlline{\ \ 63\ }\hlstd{\hlstd{\hskip 8 mm}spin\textunderscore htime\ =\ g\textunderscore object\textunderscore get\textunderscore data(G\textunderscore OBJECT(top),\ }\hlstr{"spin\textunderscore htime"}\hlstd{);\mbox{}\\
+}\hlline{\ \ 64\ }\hlstd{\hlstd{\hskip 8 mm}darea\ =\ g\textunderscore object\textunderscore get\textunderscore data(G\textunderscore OBJECT(top),\ }\hlstr{"darea"}\hlstd{);\mbox{}\\
+}\hlline{\ \ 65\ }\hlstd{\hlstd{\hskip 8 mm}label\textunderscore atom\ =\ g\textunderscore object\textunderscore get\textunderscore data(G\textunderscore OBJECT(top),\ }\hlstr{"label\textunderscore atom"}\hlstd{);\mbox{}\\
+}\hlline{\ \ 66\ }\hlstd{\hlstd{\hskip 8 mm}label\textunderscore time\ =\ g\textunderscore object\textunderscore get\textunderscore data(G\textunderscore OBJECT(top),\ }\hlstr{"label\textunderscore time"}\hlstd{);\mbox{}\\
+}\hlline{\ \ 67\ }\hlstd{\mbox{}\\
+}\hlline{\ \ 68\ }\hlstd{\hlstd{\hskip 8 mm}}\hlcom{/*\ ersetzt\ den\ Startbutton\ durch\ den\ Pausebutton\ */}\hlstd{\mbox{}\\
+}\hlline{\ \ 69\ }\hlstd{\hlstd{\hskip 8 mm}g\textunderscore signal\textunderscore handlers\textunderscore block\textunderscore by\textunderscore func(G\textunderscore OBJECT(button\textunderscore start),\mbox{}\\
+}\hlline{\ \ 70\ }\hlstd{\hlstd{\hskip 72 mm}(gpointer)\ sim\textunderscore decay,\ rand);\mbox{}\\
+}\hlline{\ \ 71\ }\hlstd{\hlstd{\hskip 8 mm}gtk\textunderscore button\textunderscore set\textunderscore label(GTK\textunderscore BUTTON(button\textunderscore start),\ \textunderscore (}\hlstr{"pause"}\hlstd{));\mbox{}\\
+}\hlline{\ \ 72\ }\hlstd{\hlstd{\hskip 8 mm}gtk\textunderscore button\textunderscore leave(GTK\textunderscore BUTTON(button\textunderscore start));\mbox{}\\
+}\hlline{\ \ 73\ }\hlstd{\mbox{}\\
+}\hlline{\ \ 74\ }\hlstd{\hlstd{\hskip 8 mm}}\hlcom{/*\ bereitet\ den\ Stopbutton\ vor\ */}\hlstd{\mbox{}\\
+}\hlline{\ \ 75\ }\hlstd{\hlstd{\hskip 8 mm}quit\ =\ }\hlnum{0}\hlstd{;\mbox{}\\
+}\hlline{\ \ 76\ }\hlstd{\hlstd{\hskip 8 mm}gtk\textunderscore widget\textunderscore set\textunderscore sensitive(button\textunderscore stop,\ TRUE);\mbox{}\\
+}\hlline{\ \ 77\ }\hlstd{\hlstd{\hskip 8 mm}g\textunderscore signal\textunderscore connect(G\textunderscore OBJECT(button\textunderscore stop),\ }\hlstr{"clicked"}\hlstd{,\mbox{}\\
+}\hlline{\ \ 78\ }\hlstd{\hlstd{\hskip 42 mm}G\textunderscore CALLBACK(stop\textunderscore sim),\ \&quit);\mbox{}\\
+}\hlline{\ \ 79\ }\hlstd{\mbox{}\\
+}\hlline{\ \ 80\ }\hlstd{\hlstd{\hskip 8 mm}}\hlcom{/*\ holt\ die\ Eingaben\ des\ Nutzers\ von\ den\ Spinbutton\ */}\hlstd{\mbox{}\\
+}\hlline{\ \ 81\ }\hlstd{\hlstd{\hskip 8 mm}number\ =\ gtk\textunderscore spin\textunderscore button\textunderscore get\textunderscore value\textunderscore as\textunderscore int(GTK\textunderscore SPIN\textunderscore BUTTON(spin\textunderscore number));\mbox{}\\
+}\hlline{\ \ 82\ }\hlstd{\hlstd{\hskip 8 mm}}\hlkey{for\ }\hlstd{(i\ =\ }\hlnum{0}\hlstd{;\ i\ $<$\ ATOM\textunderscore STATES}\hlnum{-1}\hlstd{;\ i++)\mbox{}\\
+}\hlline{\ \ 83\ }\hlstd{\hlstd{\hskip 16 mm}thalf[i]\ =\ gtk\textunderscore spin\textunderscore button\textunderscore get\textunderscore value(GTK\textunderscore SPIN\textunderscore BUTTON(spin\textunderscore htime[i]));\mbox{}\\
+}\hlline{\ \ 84\ }\hlstd{\mbox{}\\
+}\hlline{\ \ 85\ }\hlstd{\hlstd{\hskip 8 mm}}\hlcom{/*\ packt\ die\ Eingaben\ in\ die\ SimData\ Struktur\ */}\hlstd{\mbox{}\\
+}\hlline{\ \ 86\ }\hlstd{\hlstd{\hskip 8 mm}sdata\ =\ (SimData\ *)\ g\textunderscore malloc(}\hlkey{sizeof}\hlstd{(SimData));\mbox{}\\
+}\hlline{\ \ 87\ }\hlstd{\hlstd{\hskip 8 mm}sdata-$>$atoms[}\hlnum{0}\hlstd{]\ =\ number;\mbox{}\\
+}\hlline{\ \ 88\ }\hlstd{\hlstd{\hskip 8 mm}sdata-$>$states\ =\ }\hlnum{3}\hlstd{;\mbox{}\\
+}\hlline{\ \ 89\ }\hlstd{\hlstd{\hskip 8 mm}sdata-$>$atoms[}\hlnum{1}\hlstd{]\ =\ }\hlnum{0}\hlstd{;\mbox{}\\
+}\hlline{\ \ 90\ }\hlstd{\hlstd{\hskip 8 mm}sdata-$>$atoms[}\hlnum{2}\hlstd{]\ =\ }\hlnum{0}\hlstd{;\mbox{}\\
+}\hlline{\ \ 91\ }\hlstd{\hlstd{\hskip 8 mm}sdata-$>$thalf[}\hlnum{0}\hlstd{]\ =\ thalf[}\hlnum{0}\hlstd{];\mbox{}\\
+}\hlline{\ \ 92\ }\hlstd{\hlstd{\hskip 8 mm}sdata-$>$thalf[}\hlnum{1}\hlstd{]\ =\ thalf[}\hlnum{1}\hlstd{];\mbox{}\\
+}\hlline{\ \ 93\ }\hlstd{\mbox{}\\
+}\hlline{\ \ 94\ }\hlstd{\hlstd{\hskip 8 mm}gf\ =\ (GraphFunc\ *)\ g\textunderscore malloc(}\hlkey{sizeof}\hlstd{(GraphFunc));\mbox{}\\
+}\hlline{\ \ 95\ }\hlstd{\hlstd{\hskip 8 mm}gf-$>$func\ =\ exp\textunderscore growth;\mbox{}\\
+}\hlline{\ \ 96\ }\hlstd{\hlstd{\hskip 8 mm}gf-$>$data\ =\ sdata;\mbox{}\\
+}\hlline{\ \ 97\ }\hlstd{\mbox{}\\
+}\hlline{\ \ 98\ }\hlstd{\hlstd{\hskip 8 mm}afield\ =\ afield\textunderscore new(number,\ (darea\ +\ }\hlnum{1}\hlstd{)-$>$allocation.width,\mbox{}\\
+}\hlline{\ \ 99\ }\hlstd{\hlstd{\hskip 48 mm}(darea\ +\ }\hlnum{1}\hlstd{)-$>$allocation.height);\mbox{}\\
+}\hlline{\ 100\ }\hlstd{\hlstd{\hskip 8 mm}afield\textunderscore randomize(afield,\ rand);\mbox{}\\
+}\hlline{\ 101\ }\hlstd{\mbox{}\\
+}\hlline{\ 102\ }\hlstd{\hlstd{\hskip 8 mm}sig\textunderscore darea[}\hlnum{0}\hlstd{]\ =\ g\textunderscore signal\textunderscore connect(G\textunderscore OBJECT(darea[}\hlnum{0}\hlstd{]),\ }\hlstr{"configure\textunderscore event"}\hlstd{,\mbox{}\\
+}\hlline{\ 103\ }\hlstd{\hlstd{\hskip 72 mm}G\textunderscore CALLBACK(afield\textunderscore resize),\ afield);\mbox{}\\
+}\hlline{\ 104\ }\hlstd{\mbox{}\\
+}\hlline{\ 105\ }\hlstd{\hlstd{\hskip 8 mm}tstep\ =\ }\hlnum{0.003}\hlstd{;\mbox{}\\
+}\hlline{\ 106\ }\hlstd{\hlstd{\hskip 8 mm}pos\ =\ }\hlnum{0}\hlstd{;\mbox{}\\
+}\hlline{\ 107\ }\hlstd{\mbox{}\\
+}\hlline{\ 108\ }\hlstd{\hlstd{\hskip 8 mm}update\textunderscore status\textunderscore atoms(darea[}\hlnum{0}\hlstd{],\ sdata-$>$atoms);\mbox{}\\
+}\hlline{\ 109\ }\hlstd{\hlstd{\hskip 8 mm}update\textunderscore status\textunderscore time(darea[}\hlnum{0}\hlstd{],\ }\hlnum{0.0}\hlstd{);\mbox{}\\
+}\hlline{\ 110\ }\hlstd{\hlstd{\hskip 8 mm}darea\textunderscore clear(darea[}\hlnum{0}\hlstd{]);\mbox{}\\
+}\hlline{\ 111\ }\hlstd{\hlstd{\hskip 8 mm}afield\textunderscore draw(darea[}\hlnum{0}\hlstd{],\ afield);\mbox{}\\
+}\hlline{\ 112\ }\hlstd{\mbox{}\\
+}\hlline{\ 113\ }\hlstd{\hlstd{\hskip 8 mm}gdk\textunderscore window\textunderscore get\textunderscore size((darea\ +\ }\hlnum{1}\hlstd{)-$>$window,\ \&a,\ \&b);\mbox{}\\
+}\hlline{\ 114\ }\hlstd{\hlstd{\hskip 8 mm}coord\ =\ coord\textunderscore system\textunderscore new((darea\ +\ }\hlnum{1}\hlstd{)-$>$allocation.width,\mbox{}\\
+}\hlline{\ 115\ }\hlstd{\hlstd{\hskip 58 mm}(darea\ +\ }\hlnum{1}\hlstd{)-$>$allocation.height,\mbox{}\\
+}\hlline{\ 116\ }\hlstd{\hlstd{\hskip 58 mm}}\hlnum{0}\hlstd{,\ calc\textunderscore duration(number,\ thalf),\mbox{}\\
+}\hlline{\ 117\ }\hlstd{\hlstd{\hskip 58 mm}}\hlnum{0}\hlstd{,\ number);\mbox{}\\
+}\hlline{\ 118\ }\hlstd{\mbox{}\\
+}\hlline{\ 119\ }\hlstd{\hlstd{\hskip 8 mm}darea\textunderscore clear(darea[}\hlnum{1}\hlstd{]);\mbox{}\\
+}\hlline{\ 120\ }\hlstd{\hlstd{\hskip 8 mm}coord\textunderscore system\textunderscore draw(darea[}\hlnum{1}\hlstd{],\ coord);\mbox{}\\
+}\hlline{\ 121\ }\hlstd{\mbox{}\\
+}\hlline{\ 122\ }\hlstd{\hlstd{\hskip 8 mm}graph\textunderscore draw\textunderscore func(graph\textunderscore func,\ darea[}\hlnum{1}\hlstd{],\ coord);\mbox{}\\
+}\hlline{\ 123\ }\hlstd{\mbox{}\\
+}\hlline{\ 124\ }\hlstd{\hlstd{\hskip 8 mm}graph\ =\ g\textunderscore malloc(}\hlnum{2\ }\hlstd{*\ }\hlkey{sizeof}\hlstd{(Graph\ *));\mbox{}\\
+}\hlline{\ 125\ }\hlstd{\hlstd{\hskip 8 mm}graph[}\hlnum{0}\hlstd{]\ =\ graph\textunderscore new(}\hlnum{0}\hlstd{);\mbox{}\\
+}\hlline{\ 126\ }\hlstd{\hlstd{\hskip 8 mm}coord-$>$graphs\ =\ graph;\mbox{}\\
+}\hlline{\ 127\ }\hlstd{\mbox{}\\
+}\hlline{\ 128\ }\hlstd{\hlstd{\hskip 8 mm}sig\textunderscore darea[}\hlnum{1}\hlstd{]\ =\ g\textunderscore signal\textunderscore connect(G\textunderscore OBJECT(darea[}\hlnum{1}\hlstd{]),\ }\hlstr{"configure\textunderscore event"}\hlstd{,\mbox{}\\
+}\hlline{\ 129\ }\hlstd{\hlstd{\hskip 72 mm}G\textunderscore CALLBACK(graph\textunderscore resize),\ coord);\mbox{}\\
+}\hlline{\ 130\ }\hlstd{\mbox{}\\
+}\hlline{\ 131\ }\hlstd{\hlstd{\hskip 8 mm}}\hlkey{while\ }\hlstd{(g\textunderscore main\textunderscore iteration(FALSE))\mbox{}\\
+}\hlline{\ 132\ }\hlstd{\hlstd{\hskip 16 mm};\mbox{}\\
+}\hlline{\ 133\ }\hlstd{\mbox{}\\
+}\hlline{\ 134\ }\hlstd{\hlstd{\hskip 8 mm}timer\ =\ timer\textunderscore new();\mbox{}\\
+}\hlline{\ 135\ }\hlstd{\hlstd{\hskip 8 mm}g\textunderscore signal\textunderscore connect(G\textunderscore OBJECT(button),\ }\hlstr{"clicked"}\hlstd{,\mbox{}\\
+}\hlline{\ 136\ }\hlstd{\hlstd{\hskip 42 mm}G\textunderscore CALLBACK(pause\textunderscore sim),\ timer);\mbox{}\\
+}\hlline{\ 137\ }\hlstd{\hlstd{\hskip 8 mm}tstart\ =\ tnext\ =\ told\ =\ timer\textunderscore elapsed(timer);\mbox{}\\
+}\hlline{\ 138\ }\hlstd{\mbox{}\\
+}\hlline{\ 139\ }\hlstd{\hlstd{\hskip 8 mm}}\hlkey{while}\hlstd{(sdata-$>$atoms[}\hlnum{0}\hlstd{]\ $>$\ }\hlnum{0\ }\hlstd{\&\&\ (!quit))\mbox{}\\
+}\hlline{\ 140\ }\hlstd{\hlstd{\hskip 8 mm}\{\mbox{}\\
+}\hlline{\ 141\ }\hlstd{\hlstd{\hskip 16 mm}t\ =\ timer\textunderscore elapsed(timer)\ -\ tstart;\mbox{}\\
+}\hlline{\ 142\ }\hlstd{\hlstd{\hskip 16 mm}}\hlkey{if\ }\hlstd{(t\ $>$=\ tnext)\mbox{}\\
+}\hlline{\ 143\ }\hlstd{\hlstd{\hskip 16 mm}\{\mbox{}\\
+}\hlline{\ 144\ }\hlstd{\hlstd{\hskip 24 mm}tloop\ =\ t\ -\ told;\mbox{}\\
+}\hlline{\ 145\ }\hlstd{\hlstd{\hskip 24 mm}told\ =\ t;\mbox{}\\
+}\hlline{\ 146\ }\hlstd{\hlstd{\hskip 24 mm}}\hlkey{for\ }\hlstd{(state\ =\ }\hlnum{0}\hlstd{;\ state\ $<$\ sdata-$>$states\ }\hlnum{-\ 1}\hlstd{;\ state++)\mbox{}\\
+}\hlline{\ 147\ }\hlstd{\hlstd{\hskip 24 mm}\{\mbox{}\\
+}\hlline{\ 148\ }\hlstd{\hlstd{\hskip 32 mm}decays\ =\ decay\textunderscore real(tloop,\ sdata-$>$atoms[state],\ thalf,\ rand);\mbox{}\\
+}\hlline{\ 149\ }\hlstd{\hlstd{\hskip 32 mm}}\hlkey{if\ }\hlstd{(decays\ $>$\ }\hlnum{0}\hlstd{)\mbox{}\\
+}\hlline{\ 150\ }\hlstd{\hlstd{\hskip 32 mm}\{\mbox{}\\
+}\hlline{\ 151\ }\hlstd{\hlstd{\hskip 40 mm}sdata-$>$atoms[state\ +\ }\hlnum{0}\hlstd{]\ -=\ decays;\mbox{}\\
+}\hlline{\ 152\ }\hlstd{\hlstd{\hskip 40 mm}sdata-$>$atoms[state\ +\ }\hlnum{1}\hlstd{]\ +=\ decays;\mbox{}\\
+}\hlline{\ 153\ }\hlstd{\mbox{}\\
+}\hlline{\ 154\ }\hlstd{\hlstd{\hskip 40 mm}update\textunderscore status\textunderscore atoms(darea[}\hlnum{0}\hlstd{],\ sdata-$>$atoms);\mbox{}\\
+}\hlline{\ 155\ }\hlstd{\mbox{}\\
+}\hlline{\ 156\ }\hlstd{\hlstd{\hskip 40 mm}}\hlkey{for\ }\hlstd{(i\ =\ }\hlnum{0}\hlstd{;\ i\ $<$\ decays;\ i++)\mbox{}\\
+}\hlline{\ 157\ }\hlstd{\hlstd{\hskip 40 mm}\{\mbox{}\\
+}\hlline{\ 158\ }\hlstd{\hlstd{\hskip 48 mm}(af-$>$coords\ +\ pos)-$>$state\ =\ }\hlnum{1}\hlstd{;\mbox{}\\
+}\hlline{\ 159\ }\hlstd{\hlstd{\hskip 48 mm}draw\textunderscore atom(darea[}\hlnum{0}\hlstd{],\mbox{}\\
+}\hlline{\ 160\ }\hlstd{\hlstd{\hskip 68 mm}(afield-$>$coords\ +\ pos),\mbox{}\\
+}\hlline{\ 161\ }\hlstd{\hlstd{\hskip 68 mm}afield-$>$wide);\mbox{}\\
+}\hlline{\ 162\ }\hlstd{\hlstd{\hskip 48 mm}pos++;\mbox{}\\
+}\hlline{\ 163\ }\hlstd{\hlstd{\hskip 40 mm}\}\mbox{}\\
+}\hlline{\ 164\ }\hlstd{\hlstd{\hskip 32 mm}\}\mbox{}\\
+}\hlline{\ 165\ }\hlstd{\mbox{}\\
+}\hlline{\ 166\ }\hlstd{\hlstd{\hskip 32 mm}point\ =\ point\textunderscore alloc(t,\ sdata-$>$atoms[}\hlnum{0}\hlstd{]);\mbox{}\\
+}\hlline{\ 167\ }\hlstd{\hlstd{\hskip 32 mm}}\hlkey{if\ }\hlstd{(graph-$>$points\ !=\ NULL)\mbox{}\\
+}\hlline{\ 168\ }\hlstd{\hlstd{\hskip 32 mm}\{\mbox{}\\
+}\hlline{\ 169\ }\hlstd{\hlstd{\hskip 40 mm}old\textunderscore point\ =\ graph-$>$points-$>$data;\mbox{}\\
+}\hlline{\ 170\ }\hlstd{\hlstd{\hskip 40 mm}graph\textunderscore draw\textunderscore line(darea[}\hlnum{1}\hlstd{],\ coord,\mbox{}\\
+}\hlline{\ 171\ }\hlstd{\hlstd{\hskip 72 mm}old\textunderscore point-$>$x,\ old\textunderscore point-$>$y,\mbox{}\\
+}\hlline{\ 172\ }\hlstd{\hlstd{\hskip 72 mm}point-$>$x,\ point-$>$y,\ }\hlnum{0}\hlstd{);\mbox{}\\
+}\hlline{\ 173\ }\hlstd{\hlstd{\hskip 32 mm}\}\mbox{}\\
+}\hlline{\ 174\ }\hlstd{\hlstd{\hskip 32 mm}graph\textunderscore add(graph,\ point);\mbox{}\\
+}\hlline{\ 175\ }\hlstd{\hlstd{\hskip 24 mm}\}\mbox{}\\
+}\hlline{\ 176\ }\hlstd{\mbox{}\\
+}\hlline{\ 177\ }\hlstd{\hlstd{\hskip 24 mm}tnext\ +=\ tstep;\mbox{}\\
+}\hlline{\ 178\ }\hlstd{\hlstd{\hskip 16 mm}\}\mbox{}\\
+}\hlline{\ 179\ }\hlstd{\hlstd{\hskip 16 mm}update\textunderscore status\textunderscore time(darea[}\hlnum{0}\hlstd{],\ t);\mbox{}\\
+}\hlline{\ 180\ }\hlstd{\mbox{}\\
+}\hlline{\ 181\ }\hlstd{\hlstd{\hskip 16 mm}}\hlkey{while\ }\hlstd{(gtk\textunderscore events\textunderscore pending())\mbox{}\\
+}\hlline{\ 182\ }\hlstd{\hlstd{\hskip 24 mm}gtk\textunderscore main\textunderscore iteration();\mbox{}\\
+}\hlline{\ 183\ }\hlstd{\hlstd{\hskip 16 mm}}\hlcom{/*\hlstd{\hskip 16 mm}while\ (g\textunderscore main\textunderscore iteration(FALSE));\ */}\hlstd{\mbox{}\\
+}\hlline{\ 184\ }\hlstd{\hlstd{\hskip 8 mm}\}\mbox{}\\
+}\hlline{\ 185\ }\hlstd{\mbox{}\\
+}\hlline{\ 186\ }\hlstd{\hlstd{\hskip 8 mm}g\textunderscore signal\textunderscore handlers\textunderscore disconnect\textunderscore matched(G\textunderscore OBJECT(button\textunderscore stop),\mbox{}\\
+}\hlline{\ 187\ }\hlstd{\hlstd{\hskip 82 mm}G\textunderscore SIGNAL\textunderscore MATCH\textunderscore FUNC,\mbox{}\\
+}\hlline{\ 188\ }\hlstd{\hlstd{\hskip 82 mm}}\hlnum{0}\hlstd{,\mbox{}\\
+}\hlline{\ 189\ }\hlstd{\hlstd{\hskip 82 mm}}\hlnum{0}\hlstd{,\mbox{}\\
+}\hlline{\ 190\ }\hlstd{\hlstd{\hskip 82 mm}NULL,\mbox{}\\
+}\hlline{\ 191\ }\hlstd{\hlstd{\hskip 82 mm}(gpointer)\ stop\textunderscore sim,\mbox{}\\
+}\hlline{\ 192\ }\hlstd{\hlstd{\hskip 82 mm}NULL);\mbox{}\\
+}\hlline{\ 193\ }\hlstd{\mbox{}\\
+}\hlline{\ 194\ }\hlstd{\hlstd{\hskip 8 mm}gtk\textunderscore widget\textunderscore set\textunderscore sensitive(button\textunderscore stop,\ FALSE);\mbox{}\\
+}\hlline{\ 195\ }\hlstd{\mbox{}\\
+}\hlline{\ 196\ }\hlstd{\hlstd{\hskip 8 mm}}\hlkey{if\ }\hlstd{(timer\textunderscore is\textunderscore running(timer))\mbox{}\\
+}\hlline{\ 197\ }\hlstd{\hlstd{\hskip 16 mm}g\textunderscore signal\textunderscore handlers\textunderscore disconnect\textunderscore matched(G\textunderscore OBJECT(button\textunderscore start),\mbox{}\\
+}\hlline{\ 198\ }\hlstd{\hlstd{\hskip 90 mm}G\textunderscore SIGNAL\textunderscore MATCH\textunderscore FUNC,\mbox{}\\
+}\hlline{\ 199\ }\hlstd{\hlstd{\hskip 90 mm}}\hlnum{0}\hlstd{,\ }\hlnum{0}\hlstd{,\ NULL,\mbox{}\\
+}\hlline{\ 200\ }\hlstd{\hlstd{\hskip 90 mm}(gpointer)\ pause\textunderscore sim,\mbox{}\\
+}\hlline{\ 201\ }\hlstd{\hlstd{\hskip 90 mm}NULL);\mbox{}\\
+}\hlline{\ 202\ }\hlstd{\hlstd{\hskip 8 mm}}\hlkey{else\mbox{}\\
+}\hlline{\ 203\ }\hlkey{\hlstd{\hskip 16 mm}}\hlstd{g\textunderscore signal\textunderscore handlers\textunderscore disconnect\textunderscore matched(G\textunderscore OBJECT(button\textunderscore start),\mbox{}\\
+}\hlline{\ 204\ }\hlstd{\hlstd{\hskip 90 mm}G\textunderscore SIGNAL\textunderscore MATCH\textunderscore FUNC,\ }\hlnum{0}\hlstd{,\ }\hlnum{0}\hlstd{,\ NULL,\ (gpointer)\ resume\textunderscore sim,\ NULL);\mbox{}\\
+}\hlline{\ 205\ }\hlstd{\mbox{}\\
+}\hlline{\ 206\ }\hlstd{\hlstd{\hskip 8 mm}g\textunderscore signal\textunderscore handlers\textunderscore unblock\textunderscore by\textunderscore func(G\textunderscore OBJECT(button\textunderscore start),\mbox{}\\
+}\hlline{\ 207\ }\hlstd{\hlstd{\hskip 76 mm}(gpointer)\ sim\textunderscore decay,\ rand);\mbox{}\\
+}\hlline{\ 208\ }\hlstd{\hlstd{\hskip 8 mm}gtk\textunderscore button\textunderscore set\textunderscore label(GTK\textunderscore BUTTON(button\textunderscore start),\ \textunderscore (}\hlstr{"start"}\hlstd{));\mbox{}\\
+}\hlline{\ 209\ }\hlstd{\mbox{}\\
+}\hlline{\ 210\ }\hlstd{\hlstd{\hskip 8 mm}g\textunderscore signal\textunderscore handler\textunderscore disconnect(G\textunderscore OBJECT(darea[}\hlnum{0}\hlstd{]),\ sig\textunderscore darea[}\hlnum{0}\hlstd{]);\mbox{}\\
+}\hlline{\ 211\ }\hlstd{\hlstd{\hskip 8 mm}g\textunderscore signal\textunderscore handler\textunderscore disconnect(G\textunderscore OBJECT(darea[}\hlnum{1}\hlstd{]),\ sig\textunderscore darea[}\hlnum{1}\hlstd{]);\mbox{}\\
+}\hlline{\ 212\ }\hlstd{\mbox{}\\
+}\hlline{\ 213\ }\hlstd{\hlstd{\hskip 8 mm}timer\textunderscore free(timer);\mbox{}\\
+}\hlline{\ 214\ }\hlstd{\mbox{}\\
+}\hlline{\ 215\ }\hlstd{\hlstd{\hskip 8 mm}afield\textunderscore free(afield);\mbox{}\\
+}\hlline{\ 216\ }\hlstd{\mbox{}\\
+}\hlline{\ 217\ }\hlstd{\hlstd{\hskip 8 mm}coord\textunderscore system\textunderscore free(coord);\mbox{}\\
+}\hlline{\ 218\ }\hlstd{\}\mbox{}\\
+}\hlline{\ 219\ }\hlstd{\mbox{}\\
+}\hlline{\ 220\ }\hlstd{}\hltyp{static\ void\ }\hlstd{resume\textunderscore sim(GtkWidget\ *button,\ MyTimer\ *timer)\mbox{}\\
+}\hlline{\ 221\ }\hlstd{\{\mbox{}\\
+}\hlline{\ 222\ }\hlstd{\hlstd{\hskip 8 mm}timer\textunderscore start(timer);\mbox{}\\
+}\hlline{\ 223\ }\hlstd{\hlstd{\hskip 8 mm}g\textunderscore signal\textunderscore handlers\textunderscore disconnect\textunderscore by\textunderscore func(G\textunderscore OBJECT(button),\mbox{}\\
+}\hlline{\ 224\ }\hlstd{\hlstd{\hskip 82 mm}(gpointer)\ resume\textunderscore sim,\ timer);\mbox{}\\
+}\hlline{\ 225\ }\hlstd{\hlstd{\hskip 8 mm}g\textunderscore signal\textunderscore connect(G\textunderscore OBJECT(button),\ }\hlstr{"clicked"}\hlstd{,\mbox{}\\
+}\hlline{\ 226\ }\hlstd{\hlstd{\hskip 42 mm}G\textunderscore CALLBACK(pause\textunderscore sim),\ timer);\mbox{}\\
+}\hlline{\ 227\ }\hlstd{\hlstd{\hskip 8 mm}gtk\textunderscore button\textunderscore set\textunderscore label(GTK\textunderscore BUTTON(button),\ \textunderscore (}\hlstr{"pause"}\hlstd{));\mbox{}\\
+}\hlline{\ 228\ }\hlstd{\}\mbox{}\\
+}\hlline{\ 229\ }\hlstd{\mbox{}\\
+}\hlline{\ 230\ }\hlstd{}\hltyp{static\ void\ }\hlstd{pause\textunderscore sim(GtkWidget\ *button,\ MyTimer\ *timer)\mbox{}\\
+}\hlline{\ 231\ }\hlstd{\{\mbox{}\\
+}\hlline{\ 232\ }\hlstd{\hlstd{\hskip 8 mm}timer\textunderscore stop(timer);\mbox{}\\
+}\hlline{\ 233\ }\hlstd{\hlstd{\hskip 8 mm}g\textunderscore signal\textunderscore handlers\textunderscore disconnect\textunderscore by\textunderscore func(G\textunderscore OBJECT(button),\mbox{}\\
+}\hlline{\ 234\ }\hlstd{\hlstd{\hskip 82 mm}(gpointer)\ pause\textunderscore sim,\ timer);\mbox{}\\
+}\hlline{\ 235\ }\hlstd{\hlstd{\hskip 8 mm}g\textunderscore signal\textunderscore connect(G\textunderscore OBJECT(button),\ }\hlstr{"clicked"}\hlstd{,\mbox{}\\
+}\hlline{\ 236\ }\hlstd{\hlstd{\hskip 42 mm}G\textunderscore CALLBACK(resume\textunderscore sim),\ timer);\mbox{}\\
+}\hlline{\ 237\ }\hlstd{\hlstd{\hskip 8 mm}gtk\textunderscore button\textunderscore set\textunderscore label(GTK\textunderscore BUTTON(button),\ \textunderscore (}\hlstr{"resume"}\hlstd{));\mbox{}\\
+}\hlline{\ 238\ }\hlstd{\}\mbox{}\\
+}\hlline{\ 239\ }\hlstd{\mbox{}\\
+}\hlline{\ 240\ }\hlstd{}\hltyp{static\ void\ }\hlstd{stop\textunderscore sim(GtkWidget\ *button,\ gint\ *quit)\mbox{}\\
+}\hlline{\ 241\ }\hlstd{\{\mbox{}\\
+}\hlline{\ 242\ }\hlstd{\hlstd{\hskip 8 mm}*quit\ =\ }\hlnum{1}\hlstd{;\mbox{}\\
+}\hlline{\ 243\ }\hlstd{\}\mbox{}\\
+}\hlline{\ 244\ }\hlstd{\mbox{}\\
+}\hlline{\ 245\ }\hlstd{}\hltyp{static\ }\hlstd{gdouble\ calc\textunderscore duration(gint\ number,\ gdouble\ thalf)\mbox{}\\
+}\hlline{\ 246\ }\hlstd{\{\mbox{}\\
+}\hlline{\ 247\ }\hlstd{\hlstd{\hskip 8 mm}}\hlkey{return\ }\hlstd{-thalf\ *\ log2(}\hlnum{1.0\ }\hlstd{/\ number)\ +\ thalf;\mbox{}\\
+}\hlline{\ 248\ }\hlstd{\}\mbox{}\\
+}\hlline{\ 249\ }\hlstd{\mbox{}\\
+}\hlline{\ 250\ }\hlstd{}\hltyp{static\ }\hlstd{gdouble\ exp\textunderscore growth(gdouble\ t,\ SimData\ *data)\mbox{}\\
+}\hlline{\ 251\ }\hlstd{\{\mbox{}\\
+}\hlline{\ 252\ }\hlstd{\hlstd{\hskip 8 mm}}\hlkey{return\ }\hlstd{(gint)\ (data-$>$atoms[}\hlnum{0}\hlstd{]\ *\ pow(}\hlnum{0.5}\hlstd{,\ (t\ /\ data-$>$thalf[}\hlnum{0}\hlstd{]))\ +\ }\hlnum{0.5}\hlstd{);\mbox{}\\
+}\hlline{\ 253\ }\hlstd{\}\mbox{}\\
+}\hlline{\ 254\ }\hlstd{\mbox{}\\
+}\hlline{\ 255\ }\hlstd{}\hltyp{static\ }\hlstd{gint\ decay\textunderscore stat(gdouble\ t,\ gint\ n,\ gint\ n0,\ gdouble\ thalf)\mbox{}\\
+}\hlline{\ 256\ }\hlstd{\{\mbox{}\\
+}\hlline{\ 257\ }\hlstd{\hlstd{\hskip 8 mm}}\hlkey{return\ }\hlstd{n\ -\ (gint)\ ((n0\ *\ pow(}\hlnum{0.5}\hlstd{,\ t\ /\ thalf))\ +\ }\hlnum{0.5}\hlstd{);\mbox{}\\
+}\hlline{\ 258\ }\hlstd{\}\mbox{}\\
+}\hlline{\ 259\ }\hlstd{\mbox{}\\
+}\hlline{\ 260\ }\hlstd{}\hltyp{static\ }\hlstd{gint\ decay\textunderscore real(gdouble\ t,\ gint\ n,\ gdouble\ thalf,\ gsl\textunderscore rng\ *rand)\mbox{}\\
+}\hlline{\ 261\ }\hlstd{\{\mbox{}\\
+}\hlline{\ 262\ }\hlstd{\hlstd{\hskip 8 mm}}\hlcom{/*\hlstd{\hskip 6 mm}return\ (gsl\textunderscore ran\textunderscore binomial(rand,\ (1.0\ -\ pow(0.5,\ (t\ /\ thalf))),\ n));\ */}\hlstd{\mbox{}\\
+}\hlline{\ 263\ }\hlstd{\hlstd{\hskip 8 mm}}\hlkey{return\ }\hlstd{gsl\textunderscore ran\textunderscore poisson(rand,\ ((}\hlnum{1.0\ }\hlstd{-\ pow(}\hlnum{0.5}\hlstd{,\ (t\ /\ thalf))))\ *\ n);\mbox{}\\
+}\hlline{\ 264\ }\hlstd{\}\mbox{}\\
+}\hlline{\ 265\ }\hlstd{}\mbox{}\\
+\normalfont
+
+\end {document}
+(* LaTeX generated by highlight 2.0-14, http://www.andre-simon.de/ *)

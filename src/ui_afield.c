@@ -1,133 +1,79 @@
+/* 
+ * ui_afield.c - Toolkit-Spezifisches zum Atomfeld
+ *
+ * Copyright 2004 Johannes Weißl
+ *
+ * This file is part of rdecay.
+ *
+ * rdecay is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * rdecay is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with rdecay; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
 #include <gtk/gtk.h>
 
 #include "ui_afield.h"
-#include "color.h"
-#include "atoms.h"
+#include "afield.h"
+#include "util.h"
 
-static gboolean init(GtkWidget *widget,
-                     GdkEventConfigure *event)
+/* passt das Atomfeld an eine veränderte Größe an */
+gboolean afield_resize(GtkWidget *darea, GdkEventConfigure *event, AtomField *af)
 {
-    GdkPixmap *pixmap;
-    GdkColor *color1, *color2;
-    GdkGC *state1, *state2;
-
-    pixmap = gdk_pixmap_new(widget->window,
-                            widget->allocation.width,
-                            widget->allocation.height,
-                            -1);
-
-    gdk_draw_rectangle(pixmap,
-                       widget->style->white_gc,
-                       TRUE,
-                       0, 0,
-                       widget->allocation.width,
-                       widget->allocation.height);
-
-    state1 = gdk_gc_new(widget->window);
-    state2 = gdk_gc_new(widget->window);
-
-    color1 = color_new(widget, 100, 123, 100);
-    color2 = color_new(widget, 13, 200, 55);
-
-    gdk_gc_set_foreground(state1, color1);
-    gdk_gc_set_foreground(state2, color2);
-
-    g_object_set_data(G_OBJECT(widget), "pixmap", pixmap);
-    g_object_set_data(G_OBJECT(widget), "state1", state1);
-    g_object_set_data(G_OBJECT(widget), "state2", state2);
-
-    return TRUE;
-}
-
-static gboolean resize(GtkWidget *widget,
-                                GdkEventConfigure *event)
-{
-/*    GdkPixmap *pixmap;
-
-    if (pixmap != NULL)
-        g_object_unref(pixmap);
-
-    pixmap = gdk_pixmap_new(widget->window,
-                            widget->allocation.width,
-                            widget->allocation.height,
-                            -1);
-
-    g_object_set_data(G_OBJECT(widget), "pixmap", pixmap); */
-
-    printf("RESIZE EVENT REGISTERD\n");
-
-    return TRUE;
-}
-
-static gboolean redraw(GtkWidget *widget,
-                             GdkEventExpose *event)
-{
-    GdkPixmap *pixmap;
-
-    pixmap = g_object_get_data(G_OBJECT(widget), "pixmap");
-
-    gdk_draw_drawable(widget->window,
-                      widget->style->fg_gc[GTK_WIDGET_STATE(widget)],
-                      pixmap,
-                      event->area.x, event->area.y,
-                      event->area.x, event->area.y,
-                      event->area.width, event->area.height);
+    IGNORE(event);
+    afield_arrange(af, darea->allocation.width, darea->allocation.height);
+    afield_draw(darea, af);
 
     return FALSE;
 }
 
-GtkWidget *create_atom_field(GtkWidget *parent_box, gdouble width, gdouble height)
-{
-    GtkWidget *top, *afield;
-
-    top = gtk_widget_get_toplevel(parent_box);
-
-    afield = gtk_drawing_area_new();
-    gtk_widget_set_size_request(afield, width, height);
-
-    g_signal_connect(G_OBJECT(afield), "realize",
-                     G_CALLBACK(init), NULL);
-
-    g_signal_connect(G_OBJECT(afield), "expose_event",
-                     G_CALLBACK(redraw), NULL);
-
-    g_signal_connect(G_OBJECT(afield), "configure_event",
-                     G_CALLBACK(resize), NULL);
-
-    gtk_box_pack_start(GTK_BOX(parent_box), afield, FALSE, FALSE, 20);
-
-    g_object_set_data(G_OBJECT(top), "atom_field", afield);
-
-    gtk_widget_show(afield);
-
-    return afield;
-}
-
+/* zeichnet ein Atom auf das Atomfeld */
 void draw_atom(GtkWidget *darea, AtomCoord *coord, gint wide)
 {
+    GtkWidget *top;
     GdkPixmap *pixmap;
-    GdkGC *style;
+    GdkGC **style;
     gint real_wide, wide_diff;
 
+    /* holt die verschiedenen Styles */
+    top = gtk_widget_get_toplevel(darea);
+    style = (GdkGC **) g_object_get_data(G_OBJECT(top), "style");
+
+    /* holt das pixmap vom Zeichenbereich */
     pixmap = g_object_get_data(G_OBJECT(darea), "pixmap");
 
+    /* berechnet die echte Breite, und den Abstand, der zu den
+       umliegenden Atomen eingehalten wird */
     real_wide = wide * 0.8;
     wide_diff = (wide - real_wide) / 2.0;
 
-    if (coord->state == 0)
-        style = g_object_get_data(G_OBJECT(darea), "state1");
-    else if (coord->state == 1)
-        style = g_object_get_data(G_OBJECT(darea), "state2");
-    else
-        return;
-
+    /* zeichnet das Rechteck */
     gdk_draw_rectangle(pixmap,
-                       style,
+                       style[coord->state],
                        TRUE,
                        coord->x + wide_diff, coord->y + wide_diff,
                        real_wide, real_wide);
 
+    /* gibt den Bereich zum Zeichnen auf den Bildschirm frei */
     gtk_widget_queue_draw_area(darea,
                                coord->x + wide_diff, coord->y + wide_diff,
                                real_wide, real_wide);
 }
+
+/* zeichnet das Atomfeld in einen Zeichenbereich */
+void afield_draw(GtkWidget *darea, AtomField *af)
+{
+    gint i;
+    for (i = 0; i < af->number; i++)
+        draw_atom(darea, (af->coords + i), af->wide);
+}
+
