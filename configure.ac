@@ -2,10 +2,10 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT(rdecay, 1.0, johannes.weissl@gmx.de)
+AC_INIT(rdecay, 1.0.0, johannes.weissl@gmx.de)
 AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_HEADER([config.h])
-AM_INIT_AUTOMAKE(rdecay, 1.0)
+AM_INIT_AUTOMAKE(rdecay, 1.0.0)
 
 AC_CANONICAL_HOST
 case $host_os in
@@ -39,7 +39,6 @@ AM_GNU_GETTEXT
 
 # Checks for libraries.
 PKG_CHECK_MODULES(GTK, gtk+-2.0)
-GTK_CFLAGS="$GTK_CFLAGS -DGTK_DISABLE_DEPRECATED"
 if test $platform = "windows" ; then
         GTK_CFLAGS="$GTK_CFLAGS -mms-bitfields -mno-cygwin -mwindows"
 fi
@@ -94,11 +93,9 @@ AC_ARG_ENABLE(cryptoapi,
         [crypto_api=$enableval])
 
 if test "$crypto_api" = yes ; then
-#    AC_CHECK_HEADER(windows.h, , [crypto_api=no])
-    AC_CHECK_HEADERS([windows.h]) AC_CHECK_HEADERS([wincrypt.h], [], [], [#if HAVE_WINDOWS_H # include <wincrypt.h> # endif ])
-
-    AC_CHECK_LIB(advapi32, CryptGenRandom, [false], [crypto_api=no])
-#    AC_SEARCH_LIBS([CryptGenRandom], [advapi32], [], [], [windows])
+    AC_CHECK_HEADERS([windows.h]) AC_CHECK_HEADERS([wincrypt.h], [], [], [#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif ])
     AC_MSG_CHECKING([for MS Crypto API])
     if test "$crypto_api" = yes ; then
         AC_DEFINE_UNQUOTED(MS_CRYPTO_API, 1, [Use the Microsoft Crypto API.])

@@ -34,8 +34,10 @@ gdouble log2(gdouble x);
 gint ipow(gint x, guint y);
 gdouble round_digits(gdouble x, guint digits);
 gboolean layout_printf(PangoLayout *layout, const gchar *format, ...);
-gboolean layout_vprintf(PangoLayout *layout, const gchar *format, va_list arg);
+gboolean layout_vprintf(PangoLayout *layout, const gchar *format,
+                        va_list arg);
 gboolean label_printf(GtkWidget *label, const gchar *format, ...);
+gchar *strdup_pretty_number(gdouble d, gboolean fract);
 gdouble dmax(gdouble x, gdouble y);
 gint max_n(gint n, ...);
 gdouble fmax_n(gint n, gdouble *num);

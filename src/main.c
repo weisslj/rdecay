@@ -64,12 +64,11 @@ int main(int argc, char *argv[])
         exit(EXIT_SUCCESS);
     }
 
+    /* wertet die Kommandozeilen-Optionen aus */
     opt_init(&argc, &argv);
 
     /* initialisiert das Toolkit (für Fenster, Buttons, etc.) */
     gtk_init(&argc, &argv);
-
-    /* wertet die Kommandozeilen-Optionen aus */
 
     /* erstellt die Bedienungsoberfläche */
     window = gui_create();
@@ -79,20 +78,13 @@ int main(int argc, char *argv[])
     rand = gsl_rng_alloc(gsl_rng_mt19937);
     gsl_rng_set(rand, random_get_seed());
 
+    /* erstellt die Simulationsstruktur */
+    sdata = simdata_new(rand);
+
     g_signal_connect_swapped(G_OBJECT(window),
                              "destroy",
                              G_CALLBACK(gsl_rng_free),
                              rand);
-
-    /* erstellt die Simulationsstruktur */
-    /* FIXME free memory */
-    sdata = (SimData *) g_malloc(sizeof(SimData));
-    sdata->afield = NULL;
-    sdata->coord_number = NULL;
-    sdata->coord_activity = NULL;
-    sdata->rand = rand;
-    sdata->atoms = (gulong *) g_malloc(ATOM_STATES * sizeof(gulong));
-    sdata->thalf = (gdouble *) g_malloc((ATOM_STATES - 1) * sizeof(gdouble));
 
     /* verknüpft den Startbutton mit der Simulationsfunktion */
     button_start = g_object_get_data(G_OBJECT(window), "button_start");
@@ -107,25 +99,29 @@ int main(int argc, char *argv[])
     return EXIT_SUCCESS;
 }
 
+/* gibt die Version aus */
 static void print_version(void)
 {
     printf("%s\n", PACKAGE_STRING);
     printf(_("Written by Johannes Weißl.\n\n"));
     printf(_("Copyright (C) 2004 Johannes Weißl\n\
-This is free software; see the source for copying conditions.  There is NO\n\
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"));
+This is free software; see the source for copying conditions.  There\
+is NO\n\
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR\
+PURPOSE.\n"));
 }
 
+/* gibt die Hilfe aus */
 static void print_help(void)
 {
     printf(_("Usage: rdecay [OPTION]...\n"));
     printf(_("Simulates the radioactive decay.\n\n"));
 
     printf(_("Arguments:\n"));
-    printf(_("      --fps NUMBER           set frames per second to NUMBER\n"));
-    printf(_("      --showfps              print fps to stdout\n"));
-    printf(_("  -h, --help                 display this help and exit\n"));
-    printf(_("  -v, --version              output version information and exit\n"));
+    printf(_("      --fps NUMBER  set frames per second to NUMBER\n"));
+    printf(_("      --showfps     print fps to stdout\n"));
+    printf(_("  -h, --help        display this help and exit\n"));
+    printf(_("  -v, --version     output version information and exit\n"));
 
     printf(_("\nReport bugs to %s.\n"), PACKAGE_BUGREPORT);
 }

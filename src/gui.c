@@ -30,6 +30,7 @@
 #include "ui_afield.h"
 
 #include <gtk/gtk.h>
+#include <stdlib.h>
 #include <math.h>
 
 #if HAVE_CONFIG_H
@@ -42,7 +43,7 @@
 
 #define N_BOXES 8
 #define DEFAULT_NUMBER 200
-#define DEFAULT_HTIME(x) (((x) == 0) ? 10.0 : 8.0)
+#define DEFAULT_HTIME(x) atoms_get_htime(x)
 
 static gboolean delete_event(void);
 static void destroy(void);
@@ -52,9 +53,13 @@ static void set_graph_type_number(GtkWidget *radio, GtkWidget *top);
 static void set_graph_type_activity(GtkWidget *radio, GtkWidget *top);
 
 static GtkWidget *create_time_menu(void);
+
 static GtkWidget *create_template_menu(void);
 static void set_template(GtkWidget *menu, GtkWidget *top);
+static void add_template(GtkWidget *menu, gint n, const gchar *text, ...);
+
 static gchar *format_log_scale(GtkScale *scale, gdouble value);
+static gboolean reset_scale(GtkWidget *scale, GdkEventButton *event);
 
 static void create_dareas(GtkWidget *top, GtkWidget *box1, GtkWidget *box2);
 static void create_status(GtkWidget *top, GtkWidget *box);
@@ -79,11 +84,13 @@ GtkWidget *gui_create(void)
     scr_width = gdk_screen_get_width(screen);
     scr_height = gdk_screen_get_height(screen);
 
-    /* erstellt das Hauptfenster, und setzt Größe, Namen und Randabstand */
+    /* erstellt das Hauptfenster, und setzt Größe,
+       Namen und Randabstand */
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_default_size(GTK_WINDOW(window),
                                 scr_width * 0.85, scr_height * 0.85);
-    gtk_widget_set_name(window, _("simulation of radioactive decay"));
+    gtk_window_set_title(GTK_WINDOW(window),
+                         _("simulation of radioactive decay"));
     gtk_container_set_border_width(GTK_CONTAINER(window), 5);
 
     /* verknüpft das Hauptfenster mit Callback-Funktionen */
@@ -156,8 +163,8 @@ GtkWidget *gui_create(void)
     box[7] = gtk_vbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box[4]), box[7], TRUE, TRUE, 0);
 
-    /* FIXME */
-    toggle_states(g_object_get_data(G_OBJECT(window), "spin_states"), window);
+    toggle_states(g_object_get_data(G_OBJECT(window), "spin_states"),
+                  window);
 
     /* erstellt die Buttons */
     create_buttons(window, box[7]);
@@ -177,6 +184,14 @@ GtkWidget *gui_create(void)
     
     return window;
 }
+
+/* zerstört das GUI */
+void destroy(void)
+{
+    opt_free();
+    gtk_main_quit();
+}
+
 
 /* berechnet die eingestellte Ablaufgeschwindigkeit */
 gdouble scale_get_speed(GtkWidget *scale_speed)
@@ -236,69 +251,64 @@ static void create_dareas(GtkWidget *top, GtkWidget *box1, GtkWidget *box2)
 static void create_status(GtkWidget *top, GtkWidget *box)
 {
     GtkWidget *frame, *table, *label[ATOM_STATES + 1],
-              **label_atom, *label_time;
+              **label_atom, *label_time, **progress_atom;
     gint i;
 
-    label_atom = (GtkWidget **) g_malloc(ATOM_STATES * sizeof(GtkWidget *));
+    label_atom = (GtkWidget **)
+                 g_malloc(ATOM_STATES * sizeof(GtkWidget *));
+    progress_atom = (GtkWidget **)
+                 g_malloc(ATOM_STATES * sizeof(GtkWidget *));
     g_signal_connect_swapped(G_OBJECT(top), 
                              "destroy", 
                              G_CALLBACK(g_free),
                              label_atom);
+    g_signal_connect_swapped(G_OBJECT(top), 
+                             "destroy", 
+                             G_CALLBACK(g_free),
+                             progress_atom);
 
     frame = gtk_frame_new(NULL);
     gtk_box_pack_start(GTK_BOX(box), frame, FALSE, FALSE, 0);
 
-    table = gtk_table_new(4, 2, FALSE);
+    table = gtk_table_new(ATOM_STATES + 1, 3, FALSE);
     gtk_container_add(GTK_CONTAINER(frame), table);
 
     for (i = 0; i < ATOM_STATES; i++) {
         label[i] = gtk_label_new(NULL);
-        label_printf(label[i], "%s: ", _(get_atom_name(i)));
+        label_printf(label[i], "%s: ", _(atoms_get_name(i)));
+
+        label_atom[i] = gtk_label_new("-");
+        gtk_misc_set_alignment(GTK_MISC(label_atom[i]), 0, 0);
+        gtk_table_attach(GTK_TABLE(table), label_atom[i], 1, 2, i, i + 1,
+                         GTK_FILL, GTK_SHRINK, 0, 0);
+
+        progress_atom[i] = gtk_progress_bar_new();
+        gtk_table_attach(GTK_TABLE(table), progress_atom[i], 2, 3, i, i + 1,
+                         GTK_FILL | GTK_EXPAND, GTK_SHRINK, 0, 0);
     }
-    label[ATOM_STATES] = gtk_label_new(_("time: "));
 
-    gtk_misc_set_alignment(GTK_MISC(label[0]), 1, 0);
-    gtk_misc_set_alignment(GTK_MISC(label[1]), 1, 0);
-    gtk_misc_set_alignment(GTK_MISC(label[2]), 1, 0);
-    gtk_misc_set_alignment(GTK_MISC(label[3]), 1, 0);
-
-    gtk_table_attach(GTK_TABLE(table), label[0], 0, 1, 0, 1,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
-    gtk_table_attach(GTK_TABLE(table), label[1], 0, 1, 1, 2,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
-    gtk_table_attach(GTK_TABLE(table), label[2], 0, 1, 2, 3,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
-    gtk_table_attach(GTK_TABLE(table), label[3], 0, 1, 3, 4,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
-
-    label_atom[0] = gtk_label_new("-");
-    label_atom[1] = gtk_label_new("-");
-    label_atom[2] = gtk_label_new("-");
+    label[i] = gtk_label_new(_("time: "));
     label_time = gtk_label_new("-");
-
-    gtk_misc_set_alignment(GTK_MISC(label_atom[0]), 0, 0);
-    gtk_misc_set_alignment(GTK_MISC(label_atom[1]), 0, 0);
-    gtk_misc_set_alignment(GTK_MISC(label_atom[2]), 0, 0);
     gtk_misc_set_alignment(GTK_MISC(label_time), 0, 0);
+    gtk_table_attach(GTK_TABLE(table), label_time, 1, 2, i, i + 1,
+                     GTK_FILL, GTK_SHRINK, 0, 0);
 
-    gtk_table_attach(GTK_TABLE(table), label_atom[0], 1, 2, 0, 1,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
-    gtk_table_attach(GTK_TABLE(table), label_atom[1], 1, 2, 1, 2,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
-    gtk_table_attach(GTK_TABLE(table), label_atom[2], 1, 2, 2, 3,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
-    gtk_table_attach(GTK_TABLE(table), label_time, 1, 2, 3, 4,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
+    for (i = 0; i <= ATOM_STATES; i++) {
+        gtk_misc_set_alignment(GTK_MISC(label[i]), 1, 0);
+        gtk_table_attach(GTK_TABLE(table), label[i], 0, 1, i, i + 1,
+                         GTK_FILL, GTK_SHRINK, 0, 0);
+    }
 
     g_object_set_data(G_OBJECT(top), "label_atom", label_atom);
     g_object_set_data(G_OBJECT(top), "label_time", label_time);
+    g_object_set_data(G_OBJECT(top), "progress_atom", progress_atom);
 
-    gtk_widget_show(label[0]);
-    gtk_widget_show(label[1]);
-    gtk_widget_show(label[2]);
-    gtk_widget_show(label[3]);
-    for (i = 0; i < ATOM_STATES; i++)
+    for (i = 0; i <= ATOM_STATES; i++)
+        gtk_widget_show(label[i]);
+    for (i = 0; i < ATOM_STATES; i++) {
         gtk_widget_show(label_atom[i]);
+        gtk_widget_show(progress_atom[i]);
+    }
     gtk_widget_show(label_time);
     gtk_widget_show(table);
     gtk_widget_show(frame);
@@ -306,8 +316,8 @@ static void create_status(GtkWidget *top, GtkWidget *box)
 
 static void create_sim_input(GtkWidget *top, GtkWidget *box)
 {
-    GtkWidget *table, *frame, *ibox, *label[4], *spin_number,
-              **spin_htime, *spin_states,
+    GtkWidget *table, *frame, *ibox, *label[2 + (ATOM_STATES - 1)],
+              *spin_number, **spin_htime, *spin_states,
               **menu_htime, *menu_template, *sep;
     GtkAdjustment *adj_number, *adj_htime[ATOM_STATES-1], *adj_states;
     gint i;
@@ -328,20 +338,17 @@ static void create_sim_input(GtkWidget *top, GtkWidget *box)
     adj_number = (GtkAdjustment *)
                  gtk_adjustment_new(DEFAULT_NUMBER, 1.0,
                                     G_MAXULONG, 1.0,
-                                    10.0, 0);
+                                    100.0, 0);
 
-    adj_htime[0] = (GtkAdjustment *)
-                   gtk_adjustment_new(DEFAULT_HTIME(0), 0.1,
-                                      G_MAXDOUBLE, 0.1,
-                                      10.0, 0);
-
-    adj_htime[1] = (GtkAdjustment *)
-                   gtk_adjustment_new(DEFAULT_HTIME(1), 0.1,
-                                      G_MAXDOUBLE, 0.1,
-                                      10.0, 0);
+    for (i = 0; i < (ATOM_STATES - 1); i++) {
+        adj_htime[i] = (GtkAdjustment *)
+                       gtk_adjustment_new(DEFAULT_HTIME(i), 0.1,
+                                          2 << 19, 0.1,
+                                          100.0, 0);
+    }
 
     adj_states = (GtkAdjustment *)
-                 gtk_adjustment_new(2, 2, 3, 1, 1, 0);
+                 gtk_adjustment_new(2, 2, ATOM_STATES, 1, 1, 0);
 
     frame = gtk_frame_new(NULL);
     gtk_box_pack_start(GTK_BOX(box), frame, TRUE, TRUE, 0);
@@ -349,10 +356,10 @@ static void create_sim_input(GtkWidget *top, GtkWidget *box)
     ibox = gtk_vbox_new(FALSE, 0);
     gtk_container_add(GTK_CONTAINER(frame), ibox);
 
-    table = gtk_table_new(4, 3, FALSE);
+    table = gtk_table_new(2 + (ATOM_STATES - 1), 3, FALSE);
     gtk_box_pack_start(GTK_BOX(ibox), table, FALSE, FALSE, 0);
 
-    label[0] = gtk_label_new(_("states: "));
+    label[0] = gtk_label_new(_("generations: "));
     gtk_misc_set_alignment(GTK_MISC(label[0]), 0, 0);
     gtk_table_attach(GTK_TABLE(table), label[0], 0, 1, 0, 1,
                      GTK_FILL, GTK_SHRINK, 0, 0);
@@ -361,7 +368,6 @@ static void create_sim_input(GtkWidget *top, GtkWidget *box)
     gtk_table_attach(GTK_TABLE(table), spin_states, 1, 2, 0, 1,
                      GTK_FILL, GTK_SHRINK, 0, 0);
 
-    /* FIXME */
     g_signal_connect(G_OBJECT(spin_states),
                      "value-changed",
                      G_CALLBACK(toggle_states),
@@ -376,31 +382,21 @@ static void create_sim_input(GtkWidget *top, GtkWidget *box)
     gtk_table_attach(GTK_TABLE(table), spin_number, 1, 2, 1, 2,
                      GTK_FILL, GTK_SHRINK, 0, 0);
 
-    label[2] = gtk_label_new(_("half-life mother: "));
-    gtk_misc_set_alignment(GTK_MISC(label[2]), 0, 0);
-    gtk_table_attach(GTK_TABLE(table), label[2], 0, 1, 2, 3,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
+    for (i = 0; i < (ATOM_STATES - 1); i++) {
+        label[2+i] = gtk_label_new(NULL);
+        label_printf(label[2+i], _("half-life %s"), _(atoms_get_name(i)));
+        gtk_misc_set_alignment(GTK_MISC(label[2+i]), 0, 0);
+        gtk_table_attach(GTK_TABLE(table), label[2+i], 0, 1, 2+i, 2+i+1,
+                         GTK_FILL, GTK_SHRINK, 0, 0);
 
-    spin_htime[0] = gtk_spin_button_new(adj_htime[0], 0.5, 2);
-    gtk_table_attach(GTK_TABLE(table), spin_htime[0], 1, 2, 2, 3,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
+        spin_htime[i] = gtk_spin_button_new(adj_htime[i], 0.8, 2);
+        gtk_table_attach(GTK_TABLE(table), spin_htime[i], 1, 2, 2+i, 2+i+1,
+                         GTK_FILL, GTK_SHRINK, 0, 0);
 
-    menu_htime[0] = create_time_menu();
-    gtk_table_attach(GTK_TABLE(table), menu_htime[0], 2, 3, 2, 3,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
-
-    label[3] = gtk_label_new(_("half-life daughter: "));
-    gtk_misc_set_alignment(GTK_MISC(label[3]), 0, 0);
-    gtk_table_attach(GTK_TABLE(table), label[3], 0, 1, 3, 4,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
-
-    spin_htime[1] = gtk_spin_button_new(adj_htime[1], 0.5, 2);
-    gtk_table_attach(GTK_TABLE(table), spin_htime[1], 1, 2, 3, 4,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
-
-    menu_htime[1] = create_time_menu();
-    gtk_table_attach(GTK_TABLE(table), menu_htime[1], 2, 3, 3, 4,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
+        menu_htime[i] = create_time_menu();
+        gtk_table_attach(GTK_TABLE(table), menu_htime[i], 2, 3, 2+i, 2+i+1,
+                         GTK_FILL, GTK_SHRINK, 0, 0);
+    }
 
     sep = gtk_hseparator_new();
     gtk_box_pack_start(GTK_BOX(ibox), sep, FALSE, FALSE, 5);
@@ -421,10 +417,8 @@ static void create_sim_input(GtkWidget *top, GtkWidget *box)
     gtk_widget_show(ibox);
     gtk_widget_show(table);
     gtk_widget_show(sep);
-    gtk_widget_show(label[0]);
-    gtk_widget_show(label[1]);
-    gtk_widget_show(label[2]);
-    gtk_widget_show(label[3]);
+    for (i = 0; i < (2 + (ATOM_STATES - 1)); i++)
+        gtk_widget_show(label[i]);
     gtk_widget_show(spin_number);
     for (i = 0; i < ATOM_STATES-1; i++) {
         gtk_widget_show(spin_htime[i]);
@@ -436,8 +430,10 @@ static void create_sim_input(GtkWidget *top, GtkWidget *box)
 
 static void create_graph_input(GtkWidget *top, GtkWidget *box)
 {
-    GtkWidget *frame, *ibox, *box_radio, *table, *label_atoms[ATOM_STATES], *label_graphs[3],
-              **check_graph_real, **check_graph_stat, **check_graph_step, **radio_graph_type, *sep;
+    GtkWidget *frame, *ibox, *box_radio, *table,
+              *label_atoms[ATOM_STATES], *label_graphs[3],
+              **check_graph_real, **check_graph_stat,
+              **check_graph_step, **radio_graph_type, *sep;
     gint i;
 
     radio_graph_type = (GtkWidget **) g_malloc(2 * sizeof(GtkWidget *));
@@ -475,15 +471,18 @@ static void create_graph_input(GtkWidget *top, GtkWidget *box)
     box_radio = gtk_hbox_new(TRUE, 0);
     gtk_box_pack_start(GTK_BOX(ibox), box_radio, FALSE, FALSE, 0);
 
-    radio_graph_type[0] = gtk_radio_button_new_with_label(NULL, _("number"));
-    gtk_box_pack_start(GTK_BOX(box_radio), radio_graph_type[0], FALSE, FALSE, 0);
+    radio_graph_type[0] = gtk_radio_button_new_with_label(NULL,
+                                                          _("number"));
+    gtk_box_pack_start(GTK_BOX(box_radio), radio_graph_type[0],
+                       FALSE, FALSE, 0);
 
     radio_graph_type[1] = gtk_radio_button_new_with_label_from_widget(
             GTK_RADIO_BUTTON(radio_graph_type[0]), _("activity"));
-    gtk_box_pack_start(GTK_BOX(box_radio), radio_graph_type[1], FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(box_radio), radio_graph_type[1],
+                       FALSE, FALSE, 0);
 
-    g_signal_connect(G_OBJECT(radio_graph_type[0]), 
-                     "clicked", 
+    g_signal_connect(G_OBJECT(radio_graph_type[0]),
+                     "clicked",
                      G_CALLBACK(set_graph_type_number),
                      top);
     g_signal_connect(G_OBJECT(radio_graph_type[1]), 
@@ -501,7 +500,7 @@ static void create_graph_input(GtkWidget *top, GtkWidget *box)
     gtk_table_attach(GTK_TABLE(table), label_graphs[0], 0, 1, 0, 1,
                      GTK_FILL, GTK_SHRINK, 5, 0);
 
-    label_graphs[1] = gtk_label_new(_("stat"));
+    label_graphs[1] = gtk_label_new(_("stat."));
     gtk_table_attach(GTK_TABLE(table), label_graphs[1], 1, 2, 0, 1,
                      GTK_FILL, GTK_SHRINK, 5, 0);
 
@@ -509,59 +508,25 @@ static void create_graph_input(GtkWidget *top, GtkWidget *box)
     gtk_table_attach(GTK_TABLE(table), label_graphs[2], 2, 3, 0, 1,
                      GTK_FILL, GTK_SHRINK, 5, 0);
 
-    check_graph_real[0] = gtk_check_button_new();
-    gtk_table_attach(GTK_TABLE(table), check_graph_real[0], 0, 1, 1, 2,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
+    for (i = 0; i < ATOM_STATES; i++) {
+        check_graph_real[i] = gtk_check_button_new();
+        gtk_table_attach(GTK_TABLE(table), check_graph_real[i],
+                         0, 1, 1+i, 1+i+1, GTK_FILL, GTK_SHRINK, 0, 0);
 
-    check_graph_stat[0] = gtk_check_button_new();
-    gtk_table_attach(GTK_TABLE(table), check_graph_stat[0], 1, 2, 1, 2,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
+        check_graph_stat[i] = gtk_check_button_new();
+        gtk_table_attach(GTK_TABLE(table), check_graph_stat[i],
+                         1, 2, 1+i, 1+i+1, GTK_FILL, GTK_SHRINK, 0, 0);
 
-    check_graph_step[0] = gtk_check_button_new();
-    gtk_table_attach(GTK_TABLE(table), check_graph_step[0], 2, 3, 1, 2,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
+        check_graph_step[i] = gtk_check_button_new();
+        gtk_table_attach(GTK_TABLE(table), check_graph_step[i],
+                         2, 3, 1+i, 1+i+1, GTK_FILL, GTK_SHRINK, 0, 0);
 
-    label_atoms[0] = gtk_label_new(NULL);
-    label_printf(label_atoms[0], _("%s atoms"), _(get_atom_name(0)));
-    gtk_misc_set_alignment(GTK_MISC(label_atoms[0]), 0, 0);
-    gtk_table_attach(GTK_TABLE(table), label_atoms[0], 3, 4, 1, 2,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
-
-    check_graph_real[1] = gtk_check_button_new();
-    gtk_table_attach(GTK_TABLE(table), check_graph_real[1], 0, 1, 2, 3,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
-
-    check_graph_stat[1] = gtk_check_button_new();
-    gtk_table_attach(GTK_TABLE(table), check_graph_stat[1], 1, 2, 2, 3,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
-
-    check_graph_step[1] = gtk_check_button_new();
-    gtk_table_attach(GTK_TABLE(table), check_graph_step[1], 2, 3, 2, 3,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
-
-    label_atoms[1] = gtk_label_new(NULL);
-    label_printf(label_atoms[1], _("%s atoms"), _(get_atom_name(1)));
-    gtk_misc_set_alignment(GTK_MISC(label_atoms[1]), 0, 0);
-    gtk_table_attach(GTK_TABLE(table), label_atoms[1], 3, 4, 2, 3,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
-
-    check_graph_real[2] = gtk_check_button_new();
-    gtk_table_attach(GTK_TABLE(table), check_graph_real[2], 0, 1, 3, 4,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
-
-    check_graph_stat[2] = gtk_check_button_new();
-    gtk_table_attach(GTK_TABLE(table), check_graph_stat[2], 1, 2, 3, 4,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
-
-    check_graph_step[2] = gtk_check_button_new();
-    gtk_table_attach(GTK_TABLE(table), check_graph_step[2], 2, 3, 3, 4,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
-
-    label_atoms[2] = gtk_label_new(NULL);
-    label_printf(label_atoms[2], _("%s atoms"), _(get_atom_name(2)));
-    gtk_misc_set_alignment(GTK_MISC(label_atoms[2]), 0, 0);
-    gtk_table_attach(GTK_TABLE(table), label_atoms[2], 3, 4, 3, 4,
-                     GTK_FILL, GTK_SHRINK, 0, 0);
+        label_atoms[i] = gtk_label_new(NULL);
+        label_printf(label_atoms[i], _("%s atoms"), _(atoms_get_name(i)));
+        gtk_misc_set_alignment(GTK_MISC(label_atoms[i]), 0, 0);
+        gtk_table_attach(GTK_TABLE(table), label_atoms[i],
+                         3, 4, 1+i, 1+i+1, GTK_FILL, GTK_SHRINK, 0, 0);
+    }
 
     g_object_set_data(G_OBJECT(top), "radio_graph_type", radio_graph_type);
     g_object_set_data(G_OBJECT(top), "check_graph_real", check_graph_real);
@@ -575,12 +540,11 @@ static void create_graph_input(GtkWidget *top, GtkWidget *box)
     gtk_widget_show(sep);
     for (i = 0; i < ATOM_STATES; i++)
         gtk_widget_show(label_atoms[i]);
-    gtk_widget_show(label_graphs[0]);
-    gtk_widget_show(label_graphs[1]);
-    gtk_widget_show(label_graphs[2]);
-    gtk_widget_show(radio_graph_type[0]);
-    gtk_widget_show(radio_graph_type[1]);
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < 3; i++)
+        gtk_widget_show(label_graphs[i]);
+    for (i = 0; i < 2; i++)
+        gtk_widget_show(radio_graph_type[i]);
+    for (i = 0; i < ATOM_STATES; i++) {
         gtk_widget_show(check_graph_real[i]);
         gtk_widget_show(check_graph_stat[i]);
         gtk_widget_show(check_graph_step[i]);
@@ -589,11 +553,13 @@ static void create_graph_input(GtkWidget *top, GtkWidget *box)
 
 static void create_buttons(GtkWidget *top, GtkWidget *box)
 {
-    GtkWidget *button_box, *button_start, *button_stop, *button_quit, *scale_speed, *align;
+    GtkWidget *button_box, *button_start, *button_stop,
+              *button_quit, *scale_speed, *align,
+              *label;
     GtkAdjustment *adj_speed;
 
     adj_speed = (GtkAdjustment *)
-                gtk_adjustment_new(0.0, -3.0, 25.0, 1.0, 2.0, 0.0);
+                gtk_adjustment_new(0.0, -3.0, 15.0, 1.0, 2.0, 0.0);
 
     align = gtk_alignment_new(0, 0, 0, 0);
     gtk_box_pack_start(GTK_BOX(box), align, TRUE, TRUE, 0);
@@ -610,10 +576,18 @@ static void create_buttons(GtkWidget *top, GtkWidget *box)
     button_quit = gtk_button_new_with_label(_("quit"));
     gtk_container_add(GTK_CONTAINER(button_box), button_quit);
 
+    label = gtk_label_new(_("speed"));
+    gtk_misc_set_alignment(GTK_MISC(label), 0, 0);
+    gtk_box_pack_start(GTK_BOX(box), label, FALSE, FALSE, 0);
+
     scale_speed = gtk_hscale_new(adj_speed);
     g_signal_connect(G_OBJECT(scale_speed),
                      "format-value",
                      G_CALLBACK(format_log_scale),
+                     NULL);
+    g_signal_connect(G_OBJECT(scale_speed),
+                     "button-press-event",
+                     G_CALLBACK(reset_scale),
                      NULL);
     gtk_box_pack_start(GTK_BOX(box), scale_speed, FALSE, FALSE, 0);
 
@@ -635,6 +609,7 @@ static void create_buttons(GtkWidget *top, GtkWidget *box)
     gtk_widget_show(button_start);
     gtk_widget_show(button_stop);
     gtk_widget_show(button_quit);
+    gtk_widget_show(label);
     gtk_widget_show(scale_speed);
     gtk_widget_show(align);
     gtk_widget_show(button_box);
@@ -643,21 +618,29 @@ static void create_buttons(GtkWidget *top, GtkWidget *box)
 static void create_colors(GtkWidget *top)
 {
     GdkColormap *colormap;
-    GdkColor **color_graph_real, **color_graph_stat, **color_atom, *color_grid;
-    GdkGC **style_graph_real, **style_graph_stat, **style_atom, *style_grid;
+    GdkColor **color_graph_real, **color_graph_stat,
+             **color_atom, *color_grid;
+    GdkGC **style_graph_real, **style_graph_stat,
+          **style_atom, *style_grid;
     gint i;
 
-    color_graph_real = (GdkColor **) g_malloc(ATOM_STATES * sizeof(GdkColor *));
-    style_graph_real = (GdkGC **) g_malloc(ATOM_STATES * sizeof(GdkGC *));
+    color_graph_real = (GdkColor **)
+                       g_malloc(ATOM_STATES * sizeof(GdkColor *));
+    style_graph_real = (GdkGC **)
+                       g_malloc(ATOM_STATES * sizeof(GdkGC *));
 
-    color_graph_stat = (GdkColor **) g_malloc(ATOM_STATES * sizeof(GdkColor *));
-    style_graph_stat = (GdkGC **) g_malloc(ATOM_STATES * sizeof(GdkGC *));
+    color_graph_stat = (GdkColor **)
+                       g_malloc(ATOM_STATES * sizeof(GdkColor *));
+    style_graph_stat = (GdkGC **)
+                       g_malloc(ATOM_STATES * sizeof(GdkGC *));
 
-    color_atom = (GdkColor **) g_malloc(ATOM_STATES * sizeof(GdkColor *));
-    style_atom = (GdkGC **) g_malloc(ATOM_STATES * sizeof(GdkGC *));
+    color_atom = (GdkColor **)
+                 g_malloc(ATOM_STATES * sizeof(GdkColor *));
+    style_atom = (GdkGC **)
+                 g_malloc(ATOM_STATES * sizeof(GdkGC *));
 
-    g_signal_connect_swapped(G_OBJECT(top), 
-                             "destroy", 
+    g_signal_connect_swapped(G_OBJECT(top),
+                             "destroy",
                              G_CALLBACK(g_free),
                              color_graph_real);
     g_signal_connect_swapped(G_OBJECT(top), 
@@ -677,27 +660,71 @@ static void create_colors(GtkWidget *top)
                              G_CALLBACK(g_free),
                              color_atom);
     g_signal_connect_swapped(G_OBJECT(top), 
-                             "destroy", 
+                             "destroy",
                              G_CALLBACK(g_free),
                              style_atom);
 
 
     colormap = gdk_colormap_get_system();
 
-    color_graph_real[0] = color_alloc(colormap, 0xdc, 0x8a, 0x09);
-    color_graph_real[1] = color_alloc(colormap, 0x09, 0x6f, 0x10);
-    color_graph_real[2] = color_alloc(colormap, 0x0c, 0x11, 0x82);
+    for (;;) {
+        i = 0;
+        if (i >= ATOM_STATES)
+            break;
+        color_graph_real[i] = color_alloc(colormap, 0xff, 0x8d, 0x27);
+        color_graph_stat[i] = color_alloc(colormap, 0xff, 0xc8, 0x00);
+        color_atom[i] = color_alloc(colormap, 0xff, 0x8d, 0x27);
 
-    color_graph_stat[0] = color_alloc(colormap, 0xf9, 0xb2, 0x42);
-    color_graph_stat[1] = color_alloc(colormap, 0x76, 0xe1, 0x65);
-    color_graph_stat[2] = color_alloc(colormap, 0x46, 0x7f, 0xe7);
+        i++;
+        if (i >= ATOM_STATES)
+            break;
+        color_graph_real[i] = color_alloc(colormap, 0xc3, 0x00, 0x00);
+        color_graph_stat[i] = color_alloc(colormap, 0xff, 0x50, 0x50);
+        color_atom[i] = color_alloc(colormap, 0xc3, 0x00, 0x00);
 
-    color_atom[0] = color_alloc(colormap, 0xdc, 0x8a, 0x09);
-    color_atom[1] = color_alloc(colormap, 0x09, 0x6f, 0x10);
-    color_atom[2] = color_alloc(colormap, 0x0c, 0x11, 0x82);
+        i++;
+        color_graph_real[i] = color_alloc(colormap, 0x00, 0x64, 0x00);
+        color_graph_stat[i] = color_alloc(colormap, 0x90, 0xee, 0x90);
+        color_atom[i] = color_alloc(colormap, 0x00, 0x64, 0x00);
+
+        i++;
+        if (i >= ATOM_STATES)
+            break;
+        color_graph_real[i] = color_alloc(colormap, 0x00, 0x00, 0x8b);
+        color_graph_stat[i] = color_alloc(colormap, 0xad, 0xd8, 0xe6);
+        color_atom[i] = color_alloc(colormap, 0x00, 0x00, 0x8b);
+
+        i++;
+        if (i >= ATOM_STATES)
+            break;
+        color_graph_real[i] = color_alloc(colormap, 0x64, 0x00, 0x64);
+        color_graph_stat[i] = color_alloc(colormap, 0xb0, 0x17, 0xae);
+        color_atom[i] = color_alloc(colormap, 0x64, 0x00, 0x64);
+
+        i++;
+        if (i >= ATOM_STATES)
+            break;
+        color_graph_real[i] = color_alloc(colormap, 0x78, 0x2a, 0x2a);
+        color_graph_stat[i] = color_alloc(colormap, 0xa5, 0x4f, 0x4f);
+        color_atom[i] = color_alloc(colormap, 0x78, 0x2a, 0x2a);
+
+        i++;
+        if (i >= ATOM_STATES)
+            break;
+        color_graph_real[i] = color_alloc(colormap, 0x00, 0x00, 0x00);
+        color_graph_stat[i] = color_alloc(colormap, 0x9a, 0x9a, 0x9a);
+        color_atom[i] = color_alloc(colormap, 0x00, 0x00, 0x00);
+
+        break;
+    }
+
+    for (i += 1; i < ATOM_STATES; i++) {
+        color_graph_real[i] = color_alloc(colormap, rand(), rand(), rand());
+        color_graph_stat[i] = color_alloc(colormap, rand(), rand(), rand());
+        color_atom[i] = color_alloc(colormap, rand(), rand(), rand());
+    }
 
     color_grid = color_alloc(colormap, 0xb1, 0xb1, 0xb1);
-
 
     for (i = 0; i < ATOM_STATES; i++) {
         style_graph_real[i] = gdk_gc_new(top->window);
@@ -723,7 +750,8 @@ static void create_colors(GtkWidget *top)
 
 static void color_graph_input(GtkWidget *top)
 {
-    GtkWidget **check_graph_real, **check_graph_stat;
+    GtkWidget **check_graph_real, **check_graph_stat,
+              **check_graph_step;
     GdkColor **color_graph_real, **color_graph_stat;
     gint i;
 
@@ -731,10 +759,12 @@ static void color_graph_input(GtkWidget *top)
     color_graph_real = g_object_get_data(G_OBJECT(top), "color_graph_real");
     check_graph_stat = g_object_get_data(G_OBJECT(top), "check_graph_stat");
     color_graph_stat = g_object_get_data(G_OBJECT(top), "color_graph_stat");
+    check_graph_step = g_object_get_data(G_OBJECT(top), "check_graph_step");
 
     for (i = 0; i < ATOM_STATES; i++) {
         widget_modify_bg(check_graph_real[i], color_graph_real[i]);
         widget_modify_bg(check_graph_stat[i], color_graph_stat[i]);
+        widget_modify_bg(check_graph_step[i], color_graph_stat[i]);
     }
 }
 
@@ -743,28 +773,23 @@ static gboolean delete_event(void)
     return FALSE;
 }
 
-static void destroy(void)
-{
-    opt_free();
-    gtk_main_quit();
-}
-
-/* FIXME */
 static void toggle_states(GtkWidget *spin_states, GtkWidget *top)
 {
     GtkWidget **spin_htime, **menu_htime, **radio_graph_type,
-              **check_graph_real, **check_graph_stat;
+              **check_graph_real, **check_graph_stat,
+              **check_graph_step;
     gint states, turn, i;
 
-   /* top = gtk_widget_get_toplevel(radio); */
     radio_graph_type = g_object_get_data(G_OBJECT(top), "radio_graph_type");
     spin_htime = g_object_get_data(G_OBJECT(top), "spin_htime");
     menu_htime = g_object_get_data(G_OBJECT(top), "menu_htime");
     check_graph_real = g_object_get_data(G_OBJECT(top), "check_graph_real");
     check_graph_stat = g_object_get_data(G_OBJECT(top), "check_graph_stat");
+    check_graph_step = g_object_get_data(G_OBJECT(top), "check_graph_step");
 
     states = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spin_states));
-    turn = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(radio_graph_type[0])) ? states : states - 1;
+    turn = gtk_toggle_button_get_active(
+           GTK_TOGGLE_BUTTON(radio_graph_type[0])) ? states : states - 1;
 
     for (i = 0; i < (states - 1); i++) {
         gtk_widget_set_sensitive(spin_htime[i], TRUE);
@@ -773,6 +798,7 @@ static void toggle_states(GtkWidget *spin_states, GtkWidget *top)
     for (i = 0; i < turn; i++) {
         gtk_widget_set_sensitive(check_graph_real[i], TRUE);
         gtk_widget_set_sensitive(check_graph_stat[i], TRUE);
+        gtk_widget_set_sensitive(check_graph_step[i], TRUE);
     }
 
     for (i = states - 1; i < (ATOM_STATES - 1); i++) {
@@ -782,34 +808,56 @@ static void toggle_states(GtkWidget *spin_states, GtkWidget *top)
     for (i = turn; i < ATOM_STATES; i++) {
         gtk_widget_set_sensitive(check_graph_real[i], FALSE);
         gtk_widget_set_sensitive(check_graph_stat[i], FALSE);
+        gtk_widget_set_sensitive(check_graph_step[i], FALSE);
     }
+
+    /* Mathematik-Hack */
+    if (states > 3)
+        for (i = 0; i < ATOM_STATES; i++) {
+            gtk_widget_set_sensitive(check_graph_stat[i], FALSE);
+            gtk_widget_set_sensitive(check_graph_step[i], FALSE);
+        }
 }
 
 static void set_graph_type_number(GtkWidget *radio, GtkWidget *top)
 {
-    GtkWidget **check_graph_real, **check_graph_stat, *spin_states;
+    GtkWidget **check_graph_real, **check_graph_stat,
+              **check_graph_step, *spin_states;
     gint states, i;
 
+    IGNORE(radio);
     spin_states = g_object_get_data(G_OBJECT(top), "spin_states");
     check_graph_real = g_object_get_data(G_OBJECT(top), "check_graph_real");
     check_graph_stat = g_object_get_data(G_OBJECT(top), "check_graph_stat");
+    check_graph_step = g_object_get_data(G_OBJECT(top), "check_graph_step");
 
     states = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spin_states));
 
     for (i = 0; i < states; i++) {
         gtk_widget_set_sensitive(check_graph_real[i], TRUE);
         gtk_widget_set_sensitive(check_graph_stat[i], TRUE);
+        gtk_widget_set_sensitive(check_graph_step[i], TRUE);
     }
+
+    /* Mathematik-Hack */
+    if (states > 3)
+        for (i = 0; i < ATOM_STATES; i++) {
+            gtk_widget_set_sensitive(check_graph_stat[i], FALSE);
+            gtk_widget_set_sensitive(check_graph_step[i], FALSE);
+        }
 }
     
 static void set_graph_type_activity(GtkWidget *radio, GtkWidget *top)
 {
-    GtkWidget **check_graph_real, **check_graph_stat, *spin_states;
+    GtkWidget **check_graph_real, **check_graph_stat,
+              **check_graph_step, *spin_states;
     gint states, i;
 
+    IGNORE(radio);
     spin_states = g_object_get_data(G_OBJECT(top), "spin_states");
     check_graph_real = g_object_get_data(G_OBJECT(top), "check_graph_real");
     check_graph_stat = g_object_get_data(G_OBJECT(top), "check_graph_stat");
+    check_graph_step = g_object_get_data(G_OBJECT(top), "check_graph_step");
 
     states = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spin_states));
 
@@ -819,11 +867,27 @@ static void set_graph_type_activity(GtkWidget *radio, GtkWidget *top)
     }
     gtk_widget_set_sensitive(check_graph_real[i], FALSE);
     gtk_widget_set_sensitive(check_graph_stat[i], FALSE);
+    gtk_widget_set_sensitive(check_graph_step[i], FALSE);
+
+    /* Mathematik-Hack */
+    if (states > 3)
+        for (i = 0; i < ATOM_STATES; i++) {
+            gtk_widget_set_sensitive(check_graph_stat[i], FALSE);
+            gtk_widget_set_sensitive(check_graph_step[i], FALSE);
+        }
 }
 
 static gchar *format_log_scale(GtkScale *scale, gdouble value)
 {
-    return g_strdup_printf("%.2e", pow(10, value));
+    IGNORE(scale);
+    return strdup_pretty_number(pow(10, value), TRUE);
+}
+
+static gboolean reset_scale(GtkWidget *scale, GdkEventButton *event)
+{
+    if (event->button == 3)
+        gtk_range_set_value(GTK_RANGE(scale), 0.0);
+    return FALSE;
 }
 
 static GtkWidget *create_time_menu(void)
@@ -838,11 +902,16 @@ static GtkWidget *create_time_menu(void)
     menu_item[N_DAY] = gtk_menu_item_new_with_label("d");
     menu_item[N_YEAR] = gtk_menu_item_new_with_label("a");
 
-    g_object_set_data(G_OBJECT(menu_item[N_SECOND]), "factor", GINT_TO_POINTER(1));
-    g_object_set_data(G_OBJECT(menu_item[N_MINUTE]), "factor", GINT_TO_POINTER(60));
-    g_object_set_data(G_OBJECT(menu_item[N_HOUR]), "factor", GINT_TO_POINTER(3600));
-    g_object_set_data(G_OBJECT(menu_item[N_DAY]), "factor", GINT_TO_POINTER(86400));
-    g_object_set_data(G_OBJECT(menu_item[N_YEAR]), "factor", GINT_TO_POINTER(31536000));
+    g_object_set_data(G_OBJECT(menu_item[N_SECOND]), "factor",
+                      GINT_TO_POINTER(1));
+    g_object_set_data(G_OBJECT(menu_item[N_MINUTE]), "factor",
+                      GINT_TO_POINTER(60));
+    g_object_set_data(G_OBJECT(menu_item[N_HOUR]), "factor",
+                      GINT_TO_POINTER(3600));
+    g_object_set_data(G_OBJECT(menu_item[N_DAY]), "factor",
+                      GINT_TO_POINTER(86400));
+    g_object_set_data(G_OBJECT(menu_item[N_YEAR]), "factor",
+                      GINT_TO_POINTER(31536000));
 
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item[N_SECOND]);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item[N_MINUTE]);
@@ -864,33 +933,61 @@ static GtkWidget *create_time_menu(void)
     return option_menu;
 }
 
+static void add_template(GtkWidget *menu, gint n, const gchar *text, ...)
+{
+    va_list ap;
+    GtkWidget *menu_item;
+    gdouble *htime;
+    gint i, *htime_unit;
+
+    htime = (gdouble *) g_malloc(n * sizeof(gdouble));
+    htime_unit = (gint *) g_malloc(n * sizeof(gint));
+
+    va_start(ap, text);
+    for (i = 0; i < n; i++) {
+        htime[i] = va_arg(ap, gdouble);
+        htime_unit[i] = va_arg(ap, gint);
+    }
+    va_end(ap);
+
+    menu_item = gtk_menu_item_new_with_label(text);
+
+    g_object_set_data(G_OBJECT(menu_item), "states", GINT_TO_POINTER(n+1));
+    g_object_set_data(G_OBJECT(menu_item), "htime", htime);
+    g_object_set_data(G_OBJECT(menu_item), "htime_unit", htime_unit);
+
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
+    gtk_widget_show(menu_item);
+}
+
 static GtkWidget *create_template_menu(void)
 {
-    GtkWidget *menu, *option_menu, *menu_item[3];
-    gdouble *htime;
-    gint *htime_unit;
+    GtkWidget *menu, *option_menu;
+    gint i;
 
     menu = gtk_menu_new();
+    i = 0;
 
-    htime = (gdouble *) g_malloc(2 * sizeof(gdouble));
-    htime_unit = (gint *) g_malloc(2 * sizeof(gint));
-    htime[0] = 4.5e9;
-    htime_unit[0] = N_YEAR;
-    htime[1] = 8.0e4;
-    htime_unit[1] = N_YEAR;
+    add_template(menu, 2, "Th-232 -> Ra-228 -> Pb-208",
+                 1.4e10, N_YEAR, 5.8, N_YEAR);
+    i++;
 
-    menu_item[0] = gtk_menu_item_new_with_label("U (328) -> Ra (226) -> Pb (206)");
-/*    menu_item[1] = gtk_menu_item_new_with_label("Ra (228) -> Po (216) -> Pb (208)"); */
+    add_template(menu, 4, "Am-241 -> Np-237 -> U-233 -> Th-229 -> Bi-209",
+                 4.3e2, N_YEAR, 2.1e6, N_YEAR, 1.6e5, N_YEAR, 7.3e3, N_YEAR);
+    i++;
 
-    g_object_set_data(G_OBJECT(menu_item[0]), "htime", htime);
-    g_object_set_data(G_OBJECT(menu_item[0]), "htime_unit", htime_unit);
+    add_template(menu, 3, "Th-230 -> Ra-226 -> Pb-210 -> Pb-206",
+                 7.5e4, N_YEAR, 1.6e3, N_YEAR, 22.0, N_YEAR);
+    i++;
 
-    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item[0]);
-
-    gtk_widget_show(menu_item[0]);
+    add_template(menu, 3, "U-235 -> Pa-231 -> Ac-227 -> Pb-207",
+                 7.0e8, N_YEAR, 3.3e4, N_YEAR, 22.0, N_YEAR);
+    i++;
 
     option_menu = gtk_option_menu_new();
     gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
+    gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu),
+                                i-1);
 
     gtk_widget_show(menu);
 
@@ -899,26 +996,27 @@ static GtkWidget *create_template_menu(void)
 
 static void set_template(GtkWidget *menu, GtkWidget *top)
 {
-    GtkWidget **spin_htime, **menu_htime, *template;
-    GtkMenuShell *menu_shell;
-    GList *list;
+    GtkWidget **spin_htime, **menu_htime, *spin_states, *template;
     gdouble *htime;
-    gint *htime_unit;
+    gint i, *htime_unit, states;
 
+    spin_states = g_object_get_data(G_OBJECT(top), "spin_states");
     spin_htime = g_object_get_data(G_OBJECT(top), "spin_htime");
     menu_htime = g_object_get_data(G_OBJECT(top), "menu_htime");
 
-    template = gtk_menu_get_active(GTK_MENU(gtk_option_menu_get_menu(GTK_OPTION_MENU(menu))));
+    template = gtk_menu_get_active(
+               GTK_MENU(gtk_option_menu_get_menu(GTK_OPTION_MENU(menu))));
 
+    states = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(template),
+                                               "states"));
     htime = g_object_get_data(G_OBJECT(template), "htime");
     htime_unit = g_object_get_data(G_OBJECT(template), "htime_unit");
 
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_htime[0]), htime[0]);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_htime[1]), htime[1]);
-
-    menu_shell = GTK_MENU_SHELL(gtk_option_menu_get_menu(GTK_OPTION_MENU(menu_htime[0])));
-    gtk_menu_shell_select_first(menu_shell, TRUE);
-/*    list = g_list_nth(menu_shell->children, htime_unit[0]);
-
-    gtk_menu_shell_activate_item(menu_shell, GTK_WIDGET(list->data), FALSE); */
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_states), states);
+    for (i = 0; i < (states - 1); i++) {
+        gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_htime[i]),
+                                  htime[i]);
+        gtk_option_menu_set_history(GTK_OPTION_MENU(menu_htime[i]),
+                                    htime_unit[i]);
+    }
 }

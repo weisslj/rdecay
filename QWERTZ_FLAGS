@@ -1,3 +1,0 @@
-#!/bin/sh
-
-echo 'export CFLAGS="-O3 -mcpu=k6-3 -march=k6-3 -mmmx -m3dnow"'

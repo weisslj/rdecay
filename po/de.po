@@ -1,50 +1,46 @@
-# SOME DESCRIPTIVE TITLE.
+# german rdecay po-file
 # Copyright (C) YEAR Free Software Foundation, Inc.
 # This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Johannes Weißl <johannes.weissl@gmx.de>, 2004.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: rdecay 0.8\n"
+"Project-Id-Version: rdecay 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-01-28 05:12+0100\n"
-"PO-Revision-Date: 2004-01-28 05:05+0100\n"
-"Last-Translator: Johannes Weißl <jargon@hurg.org>\n"
+"POT-Creation-Date: 2004-02-13 14:58+0100\n"
+"PO-Revision-Date: 2004-02-13 14:50+0100\n"
+"Last-Translator: Johannes Weißl <johannes.weissl@gmx.de>\n"
 "Language-Team: de <de@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/gui.c:85
+#: src/gui.c:93
 msgid "simulation of radioactive decay"
 msgstr "Simulation des radioaktiven Zerfalls"
 
-#: src/gui.c:257
+#: src/gui.c:290
 msgid "time: "
 msgstr "Zeit: "
 
-#: src/gui.c:354
-msgid "states: "
-msgstr "Zustände: "
+#: src/gui.c:362
+msgid "generations: "
+msgstr "Generationen: "
 
-#: src/gui.c:369
+#: src/gui.c:376
 msgid "atoms: "
 msgstr "Atome: "
 
-#: src/gui.c:378
-msgid "half-life mother: "
-msgstr "Halbwertszeit Mutter: "
+#: src/gui.c:387
+#, c-format
+msgid "half-life %s"
+msgstr "Halbwertszeit %s"
 
-#: src/gui.c:391
-msgid "half-life daughter: "
-msgstr "Halbwertszeit Tochter: "
-
-#: src/gui.c:477
+#: src/gui.c:475
 msgid "number"
 msgstr "Anzahl"
 
-#: src/gui.c:481
+#: src/gui.c:480
 msgid "activity"
 msgstr "Aktivität"
 
@@ -53,46 +49,90 @@ msgid "real"
 msgstr "real"
 
 #: src/gui.c:503
-msgid "stat"
+msgid "stat."
 msgstr "stat."
 
 #: src/gui.c:507
 msgid "step"
 msgstr "stuf."
 
-#: src/gui.c:524 src/gui.c:542 src/gui.c:560
+#: src/gui.c:525
 #, c-format
 msgid "%s atoms"
 msgstr "%s Atome"
 
-#: src/gui.c:603 src/sim.c:411
+#: src/gui.c:570 src/sim.c:562
 msgid "start"
 msgstr "Start"
 
-#: src/gui.c:606
+#: src/gui.c:573
 msgid "stop"
 msgstr "Stop"
 
-#: src/gui.c:609
+#: src/gui.c:576
 msgid "quit"
 msgstr "Beenden"
 
-#: src/sim.c:297 src/sim.c:433
+#: src/gui.c:579
+msgid "speed"
+msgstr "Geschwindigkeit"
+
+#: src/sim.c:369 src/sim.c:590
 msgid "pause"
 msgstr "Pause"
 
-#: src/sim.c:442
+#: src/sim.c:601
 msgid "resume"
 msgstr "Weiter"
 
-#: src/atoms.c:15
+#: src/atoms.c:38
 msgid "mother"
 msgstr "Mutter"
 
-#: src/atoms.c:16
-msgid "daughter"
+#: src/atoms.c:39
+msgid "doughter"
 msgstr "Tochter"
 
-#: src/atoms.c:17
+#: src/atoms.c:40
 msgid "grandchild"
 msgstr "Enkel"
+
+#: src/atoms.c:41
+msgid "great-grandchild"
+msgstr "Ur-Enkel"
+
+#: src/atoms.c:42
+msgid "great-great-grandchild"
+msgstr "Ur-Ur-Enkel"
+
+#: src/atoms.c:43
+msgid "great-great-great-grandchild"
+msgstr "Ur-Ur-Ur-Enkel"
+
+#: src/atoms.c:44
+msgid "great-great-great-great-grandchild"
+msgstr "Ur-Ur-Ur-Ur-Enkel"
+
+#: src/atoms.c:45
+msgid "great-great-great-great-great-grandchild"
+msgstr "Ur-Ur-Ur-Ur-Ur-Enkel"
+
+#: src/atoms.c:46
+msgid "great-great-great-great-great-great-grandchild"
+msgstr "Ur-Ur-Ur-Ur-Ur-Ur-Enkel"
+
+#: src/atoms.c:47
+msgid "great-great-great-great-great-great-great-grandchild"
+msgstr "Ur-Ur-Ur-Ur-Ur-Ur-Ur-Enkel"
+
+#: src/atoms.c:48
+msgid "great-great-great-great-great-great-great-great-grandchild"
+msgstr "Ur-Ur-Ur-Ur-Ur-Ur-Ur-Ur-Enkel"
+
+#: src/atoms.c:49
+msgid "great-great-great-great-great-great-great-great-great-grandchild"
+msgstr "Ur-Ur-Ur-Ur-Ur-Ur-Ur-Ur-Ur-Enkel"
+
+#: src/atoms.c:55
+msgid "yet another offspring"
+msgstr "und noch ein Nachkomme"

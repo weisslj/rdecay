@@ -149,6 +149,7 @@ void graph_add(Graph *gr, gdouble x, gdouble y)
 /* schaltet den Graphen an und aus */
 void graph_toggle(GtkWidget *check, Graph *gr)
 {
+    IGNORE(check);
     gr->active = TOGGLE(gr->active);
 }
 

@@ -27,7 +27,8 @@
 #define RGB (65535.0 / 255.0)
 
 /* erstellt eine neue Farbe aus drei Farbwerten */
-GdkColor color_new(GdkColormap *colormap, gint red, gint green, gint blue)
+GdkColor color_new(GdkColormap *colormap,
+                   guint8 red, guint8 green, guint8 blue)
 {
     GdkColor color;
 
@@ -41,7 +42,8 @@ GdkColor color_new(GdkColormap *colormap, gint red, gint green, gint blue)
 }
 
 /* reserviert Speicher und erstellt eine neue Farbe */
-GdkColor *color_alloc(GdkColormap *colormap, gint red, gint green, gint blue)
+GdkColor *color_alloc(GdkColormap *colormap,
+                      guint8 red, guint8 green, guint8 blue)
 {
     GdkColor *color;
 

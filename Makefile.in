@@ -143,13 +143,11 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-
-# SUBDIRS = intl m4 src
 SUBDIRS = intl m4 src po
 
 ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST = config.rpath
+EXTRA_DIST = config.rpath contrib bootstrap
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs

@@ -29,19 +29,17 @@
 #include <stdio.h>
 
 /* aktualisiert die Statusanzeige der Atome */
-void status_update_atoms(GtkWidget **label_atom, gulong *atoms)
+void status_update_atoms(GtkWidget **label_atom,
+                         GtkWidget **progress_atom,
+                         gulong *atoms, gulong total)
 {
     gint i;
 
-/*    printf("status_update_atoms\n");
-    printf("label_atom: %p | atoms: %p\n", (gpointer) label_atom, (gpointer) atoms); */
-
     for (i = 0; i < ATOM_STATES; i++) {
-/*        printf("label_atom[%d]: %p | atoms[%d] : %lu\n", i, (gpointer) label_atom[i], i, atoms[i]); */
-        label_printf(label_atom[i], "%u", atoms[i]);
+        label_printf(label_atom[i], "%lu", atoms[i]);
+        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress_atom[i]),
+                (gdouble) atoms[i] / (gdouble) total);
     }
-
-/*    printf("\n"); */
 }
 
 /* aktualisiert die Statusanzeige der Zeit */

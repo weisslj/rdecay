@@ -27,10 +27,13 @@
 
 #include <gtk/gtk.h>
 
-gboolean afield_resize(GtkWidget *darea, GdkEventConfigure *event, AtomField *af);
+gboolean afield_resize(GtkWidget *darea,
+                       GdkEventConfigure *event, AtomField *af);
 void afield_draw_atom(GtkWidget *darea, AtomField *af, gulong n);
-void afield_distrib_decays(GtkWidget *darea, AtomField *af, gulong decays, gint state);
-void afield_tint(GtkWidget *darea, AtomField *af, gulong *atoms, gint states);
+void afield_distrib_decays(GtkWidget *darea, AtomField *af,
+                           gulong decays, gint state);
+void afield_tint(GtkWidget *darea, AtomField *af,
+                 gulong *atoms, gint states);
 void afield_draw(GtkWidget *darea, AtomField *af);
 gboolean afield_benchmark(GtkWidget *darea, AtomField *af, gdouble max_t);
 

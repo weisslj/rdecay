@@ -1,10 +1,33 @@
+/* 
+ * arg.c - Verarbeitung von Argumenten
+ *
+ * Copyright 2004 Johannes Weißl
+ *
+ * This file is part of rdecay.
+ *
+ * rdecay is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * rdecay is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with rdecay; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
 #include "arg.h"
 
 #include <glib.h>
 #include <string.h>
 #include <stdlib.h>
 
-gboolean arg_find(gint *argc, gchar **argv[], const gchar *l, const gchar *s)
+/* überprüft, ob ein Argument angegeben wurde */
+gboolean arg_find(gint *argc, gchar ***argv, const gchar *l, const gchar *s)
 {
     gint i, result;
 
@@ -18,7 +41,9 @@ gboolean arg_find(gint *argc, gchar **argv[], const gchar *l, const gchar *s)
     return result;
 }
 
-gchar *arg_get_string(gint *argc, gchar **argv[], const gchar *l, const gchar *s)
+/* holt den Inhalt des Arguments als Zeichenkette */
+gchar *arg_get_string(gint *argc, gchar ***argv,
+                      const gchar *l, const gchar *s)
 {
     gint i;
     gchar *value;
@@ -42,7 +67,8 @@ gchar *arg_get_string(gint *argc, gchar **argv[], const gchar *l, const gchar *s
     return value;
 }
 
-gint arg_get_int(gint *argc, gchar **argv[], const gchar *l, const gchar *s)
+/* holt den Inhalt des Arguments als Ganzzahl */
+gint arg_get_int(gint *argc, gchar ***argv, const gchar *l, const gchar *s)
 {
     gint i;
     gchar *value;
@@ -57,7 +83,9 @@ gint arg_get_int(gint *argc, gchar **argv[], const gchar *l, const gchar *s)
     return i;
 }
 
-gdouble arg_get_double(gint *argc, gchar **argv[], const gchar *l, const gchar *s)
+/* holt den Inhalt des Arguments als Fließkommazahl */
+gdouble arg_get_double(gint *argc, gchar ***argv,
+                      const gchar *l, const gchar *s)
 {
     gdouble d;
     gchar *value;
@@ -72,7 +100,8 @@ gdouble arg_get_double(gint *argc, gchar **argv[], const gchar *l, const gchar *
     return d;
 }
 
-void arg_remove(gint *argc, gchar **argv[], gint pos, gint len)
+/* entfernt ein Argument aus der Argumentliste */
+void arg_remove(gint *argc, gchar ***argv, gint pos, gint len)
 {
     if (len <= (*argc - pos)) {
         do

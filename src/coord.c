@@ -31,8 +31,10 @@ enum { WIDTH, HEIGHT };
 
 static gdouble gen_step_size(gdouble len, gboolean fract);
 
-static gint get_number_size(gdouble n, gdouble fract, gint type, PangoLayout *layout);
-static gint get_text_size(gint type, PangoLayout *layout, const gchar *format, ...);
+static gint get_number_size(gdouble n, gdouble fract, gint type,
+                            PangoLayout *layout);
+static gint get_text_size(gint type, PangoLayout *layout,
+                          const gchar *format, ...);
 
 static gint get_y_label_width(CoordSystem *coord, PangoLayout *layout);
 static gint get_x_label_height(CoordSystem *coord, PangoLayout *layout);
@@ -141,9 +143,13 @@ void coord_system_adjust(CoordSystem *coord, GtkWidget *darea,
 
     /* berechnet die Beginn- und Endpunkte der Achsen */
     coord->x_axis_begin = get_y_label_width(coord, layout) + 15;
-    coord->x_axis_end = darea->allocation.width - ARROW_SHANK - get_text_size(WIDTH, layout, "%s [%s]", coord->x_title, coord->x_unit) - 5;
-    coord->y_axis_begin = darea->allocation.height - get_x_label_height(coord, layout) - 15;
-    coord->y_axis_end = ARROW_SHANK + get_text_size(HEIGHT, layout, "%s [%s]", coord->y_title, coord->y_unit) + 10;
+    coord->x_axis_end = darea->allocation.width - ARROW_SHANK -
+                        get_text_size(WIDTH, layout, "%s [%s]",
+                        coord->x_title, coord->x_unit) - 5;
+    coord->y_axis_begin = darea->allocation.height -
+                          get_x_label_height(coord, layout) - 15;
+    coord->y_axis_end = ARROW_SHANK + get_text_size(HEIGHT, layout,
+                        "%s [%s]", coord->y_title, coord->y_unit) + 10;
 
     /* berechnet die Länge der Achsen */
     x_axis = ABS(coord->x_axis_end - coord->x_axis_begin);
@@ -158,8 +164,10 @@ void coord_system_adjust(CoordSystem *coord, GtkWidget *darea,
     coord->step_y = gen_step_size(2 * cm_y / coord->y_fact, coord->fract_y);
 
     /* berechnet die Koordinaten des Ursprungs */
-    coord->zero_x = coord->x_axis_begin - ((gdouble) x_axis * ((gdouble) min_x / (gdouble) (max_x - min_x)));
-    coord->zero_y = coord->y_axis_end + ((gdouble) y_axis * ((gdouble) max_y / (gdouble) (max_y - min_y)));
+    coord->zero_x = coord->x_axis_begin - ((gdouble) x_axis *
+                    ((gdouble) min_x / (gdouble) (max_x - min_x)));
+    coord->zero_y = coord->y_axis_end + ((gdouble) y_axis *
+                    ((gdouble) max_y / (gdouble) (max_y - min_y)));
 }
 
 /* rechnet den X-Wert eines Punktes im Koordinatensystems in einen
@@ -194,17 +202,18 @@ static gdouble gen_step_size(gdouble len, gboolean fract)
 }
 
 /* berechnet die Größe von Zahlen auf dem Zeichenbereich */
-static gint get_number_size(gdouble n, gdouble fract, gint type, PangoLayout *layout)
+static gint get_number_size(gdouble n, gdouble fract, gint type,
+                            PangoLayout *layout)
 {
+    gchar *str;
     gint width, height;
 
-    if (fract)
-        n = ROUND(n, gint);
-    else if (n >= 0.01)
-        n = round_digits(n, 2);
+    str = strdup_pretty_number(n, fract);
 
-    layout_printf(layout, "%g", n);
+    pango_layout_set_text(layout, str, -1);
     pango_layout_get_pixel_size(layout, &width, &height);
+
+    g_free(str);
 
     if (type == WIDTH)
         return width;
@@ -215,7 +224,8 @@ static gint get_number_size(gdouble n, gdouble fract, gint type, PangoLayout *la
 }
 
 /* berechnet die Größe von Text auf dem Zeichenbereich */
-static gint get_text_size(gint type, PangoLayout *layout, const gchar *format, ...)
+static gint get_text_size(gint type, PangoLayout *layout,
+                          const gchar *format, ...)
 {
     gint width, height;
     va_list ap;
@@ -241,7 +251,8 @@ static gint get_y_label_width(CoordSystem *coord, PangoLayout *layout)
 
     pos = get_number_size(coord->max_y, coord->fract_y, WIDTH, layout);
     neg = get_number_size(coord->min_y, coord->fract_y, WIDTH, layout);
-    title = get_text_size(WIDTH, layout, "%s [%s]", coord->y_title, coord->y_unit);
+    title = get_text_size(WIDTH, layout, "%s [%s]",
+                          coord->y_title, coord->y_unit);
 
     return max_n(3, pos, neg, title);
 }
@@ -254,7 +265,8 @@ static gint get_x_label_height(CoordSystem *coord, PangoLayout *layout)
     pos = get_number_size(coord->max_x, coord->fract_x, HEIGHT, layout);
     neg = get_number_size(coord->min_x, coord->fract_x, HEIGHT, layout);
     layout_printf(layout, "%s [%s]", coord->x_title, coord->x_unit);
-    title = get_text_size(HEIGHT, layout, "%s [%s]", coord->x_title, coord->x_unit);
+    title = get_text_size(HEIGHT, layout, "%s [%s]",
+                          coord->x_title, coord->x_unit);
 
     return max_n(3, pos, neg, title);
 }

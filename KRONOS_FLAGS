@@ -1,2 +1,0 @@
-#!/bin/sh
-echo 'export CFLAGS="-O3 -mcpu=athlon-xp -march=athlon-xp -mmmx -msse -m3dnow"'

@@ -19,8 +19,6 @@ rdecay_SOURCES = \
     random.c      random.h    \
     sim.c         sim.h
 
-#    sound.c       sound.h
-
 localedir = $(datadir)/locale
 AM_CFLAGS = -DLOCALEDIR=\"$(localedir)\" @WARN_FLAGS@ @GTK_CFLAGS@ @GSL_CFLAGS@
 LIBS = @LIBINTL@ @LIBS@ @GTK_LIBS@ @GSL_LIBS@

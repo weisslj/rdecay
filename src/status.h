@@ -25,7 +25,9 @@
 
 #include <gtk/gtk.h>
 
-void status_update_atoms(GtkWidget **label_atom, gulong *atoms);
 void status_update_time(GtkWidget *label_time, gdouble time);
+void status_update_atoms(GtkWidget **label_atom,
+                         GtkWidget **progress_atom,
+                         gulong *atoms, gulong total);
 
 #endif /* _STATUS_H */

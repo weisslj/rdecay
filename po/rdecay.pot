@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-01-28 05:12+0100\n"
+"POT-Creation-Date: 2004-02-13 14:58+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,35 +16,32 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/gui.c:85
+#: src/gui.c:93
 msgid "simulation of radioactive decay"
 msgstr ""
 
-#: src/gui.c:257
+#: src/gui.c:290
 msgid "time: "
 msgstr ""
 
-#: src/gui.c:354
-msgid "states: "
+#: src/gui.c:362
+msgid "generations: "
 msgstr ""
 
-#: src/gui.c:369
+#: src/gui.c:376
 msgid "atoms: "
 msgstr ""
 
-#: src/gui.c:378
-msgid "half-life mother: "
+#: src/gui.c:387
+#, c-format
+msgid "half-life %s"
 msgstr ""
 
-#: src/gui.c:391
-msgid "half-life daughter: "
-msgstr ""
-
-#: src/gui.c:477
+#: src/gui.c:475
 msgid "number"
 msgstr ""
 
-#: src/gui.c:481
+#: src/gui.c:480
 msgid "activity"
 msgstr ""
 
@@ -53,46 +50,90 @@ msgid "real"
 msgstr ""
 
 #: src/gui.c:503
-msgid "stat"
+msgid "stat."
 msgstr ""
 
 #: src/gui.c:507
 msgid "step"
 msgstr ""
 
-#: src/gui.c:524 src/gui.c:542 src/gui.c:560
+#: src/gui.c:525
 #, c-format
 msgid "%s atoms"
 msgstr ""
 
-#: src/gui.c:603 src/sim.c:411
+#: src/gui.c:570 src/sim.c:562
 msgid "start"
 msgstr ""
 
-#: src/gui.c:606
+#: src/gui.c:573
 msgid "stop"
 msgstr ""
 
-#: src/gui.c:609
+#: src/gui.c:576
 msgid "quit"
 msgstr ""
 
-#: src/sim.c:297 src/sim.c:433
+#: src/gui.c:579
+msgid "speed"
+msgstr ""
+
+#: src/sim.c:369 src/sim.c:590
 msgid "pause"
 msgstr ""
 
-#: src/sim.c:442
+#: src/sim.c:601
 msgid "resume"
 msgstr ""
 
-#: src/atoms.c:15
+#: src/atoms.c:38
 msgid "mother"
 msgstr ""
 
-#: src/atoms.c:16
-msgid "daughter"
+#: src/atoms.c:39
+msgid "doughter"
 msgstr ""
 
-#: src/atoms.c:17
+#: src/atoms.c:40
 msgid "grandchild"
+msgstr ""
+
+#: src/atoms.c:41
+msgid "great-grandchild"
+msgstr ""
+
+#: src/atoms.c:42
+msgid "great-great-grandchild"
+msgstr ""
+
+#: src/atoms.c:43
+msgid "great-great-great-grandchild"
+msgstr ""
+
+#: src/atoms.c:44
+msgid "great-great-great-great-grandchild"
+msgstr ""
+
+#: src/atoms.c:45
+msgid "great-great-great-great-great-grandchild"
+msgstr ""
+
+#: src/atoms.c:46
+msgid "great-great-great-great-great-great-grandchild"
+msgstr ""
+
+#: src/atoms.c:47
+msgid "great-great-great-great-great-great-great-grandchild"
+msgstr ""
+
+#: src/atoms.c:48
+msgid "great-great-great-great-great-great-great-great-grandchild"
+msgstr ""
+
+#: src/atoms.c:49
+msgid "great-great-great-great-great-great-great-great-great-grandchild"
+msgstr ""
+
+#: src/atoms.c:55
+msgid "yet another offspring"
 msgstr ""

@@ -42,6 +42,8 @@ struct _SimData {
     gdouble *thalf;
 };
 
+SimData *simdata_new(gsl_rng *rand);
+void simdata_free(SimData *sdata);
 void sim_decay(GtkWidget *button_start, SimData *sdata);
 
 #endif /* _SIM_H */

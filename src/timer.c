@@ -120,9 +120,11 @@ gdouble timer_elapsed(MyTimer *timer)
 
     if (timer->active) {
         PREPARE_TIMEVAL(tval);
-        return (GET_TIME(tval) - timer->diff) * timer->speed + timer->speed_diff;
+        return (GET_TIME(tval) - timer->diff) *
+               timer->speed + timer->speed_diff;
     } else
-        return (timer->stop - timer->diff) * timer->speed + timer->speed_diff;
+        return (timer->stop - timer->diff) *
+               timer->speed + timer->speed_diff;
 }
 
 /* überprüft, ob der Timer gerade läuft */
@@ -141,11 +143,13 @@ void timer_set_speed(MyTimer *timer, gdouble speed)
     curr = GET_TIME(tval) - timer->diff;
 
     curr_changed = timer->speed * curr + timer->speed_diff;
-    timer->speed_offset += (curr_changed - timer->speed_set_changed) - (curr - timer->speed_set);
+    timer->speed_offset += (curr_changed - timer->speed_set_changed) -
+                           (curr - timer->speed_set);
 
     timer->speed_set = curr;
     timer->speed_set_changed = curr_changed;
     timer->speed = speed;
 
-    timer->speed_diff = timer->speed_set - timer->speed * timer->speed_set + timer->speed_offset;
+    timer->speed_diff = timer->speed_set - timer->speed * timer->speed_set +
+                        timer->speed_offset;
 }

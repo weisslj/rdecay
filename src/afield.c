@@ -28,7 +28,6 @@
 #include <gsl/gsl_rng.h>
 #include <math.h>
 
-
 /* erstellt ein neues Atomfeld */
 AtomField *afield_new(gulong number, GtkWidget *darea)
 {
@@ -163,12 +162,15 @@ void afield_arrange(AtomField *af, GtkWidget *darea)
     gdouble n_root, f_aspect, rows_raw, cols_raw;
     gint wide_cols, wide_rows, wide, padding, rows, cols, row, col;
     gulong i;
-    /* FIXME */
-    gdouble a, b, c;
 
     /* schaltet in den Uniform-Modus, wenn weniger Pixel als
        Atome vorhanden sind */
-    if ((gulong) (darea->allocation.width * darea->allocation.height) < af->number) {
+    if ((gulong) (darea->allocation.width * darea->allocation.height)
+            < af->number) {
+        g_free(af->atoms);
+        g_free(af->mask);
+        af->atoms = NULL;
+        af->mask = NULL;
         af->uniform = TRUE;
         return;
     }
@@ -191,13 +193,8 @@ void afield_arrange(AtomField *af, GtkWidget *darea)
     }
 
     /* berechnet die optimale Ausdehnung */
-    wide_rows = (gdouble) darea->allocation.width / (gdouble) rows + 0.5;
-    wide_cols = (gdouble) darea->allocation.height / (gdouble) cols + 0.5;
-
-    /* FIXME */
-    a = (gdouble) darea->allocation.width / (gdouble) rows;
-    b = (gdouble) darea->allocation.height / (gdouble) cols;
-    c = MIN(a, b);
+    wide_rows = (gdouble) darea->allocation.width / (gdouble) rows;
+    wide_cols = (gdouble) darea->allocation.height / (gdouble) cols;
 
     wide = MIN(wide_rows, wide_cols);
     af->wide = 0.8 * wide + 0.5;

@@ -1,5 +1,5 @@
 /* 
- * timer.h - Zeitmessung
+ * start.c - Startdatei für Windows
  *
  * Copyright 2004 Johannes Weißl
  *
@@ -20,33 +20,25 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _TIMER_H
-#define _TIMER_H
+#include <windows.h>
+#include <stdlib.h>
 
-#include <glib.h>
-
-/* Mikrosekunden pro Sekunde */
-#define USEC_PER_SEC 1000000
-
-typedef struct _MyTimer MyTimer;
-
-struct _MyTimer
+int main()
 {
-    gdouble start;
-    gdouble stop;
-    gdouble delay;
-    gdouble diff;
+    PROCESS_INFORMATION pi;
+    STARTUPINFO si;
 
-    gboolean active;
-};
+    ZeroMemory(&pi, sizeof(pi));
+    ZeroMemory(&si, sizeof(si));
 
+    si.cb = sizeof(si);
 
-MyTimer* timer_new(void);
-void timer_destroy(MyTimer *timer);
-void timer_start(MyTimer *timer);
-void timer_stop(MyTimer *timer);
-void timer_reset(MyTimer *timer);
-gdouble timer_elapsed(MyTimer *timer);
-gboolean timer_is_running(MyTimer *timer);
+    if (CreateProcess(NULL, "bin\\rdecay.exe", NULL, NULL, FALSE, 0,
+                      NULL, NULL, &si, &pi)) {
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+    } else
+        system("bin\\rdecay.exe");
 
-#endif /* _TIMER_H */
+    return EXIT_SUCCESS;
+}

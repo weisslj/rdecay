@@ -1,4 +1,4 @@
-/* 
+/*
  * util.c - kleine Hilfsfunktionen
  *
  * Copyright 2004 Johannes Weißl
@@ -54,7 +54,8 @@ gboolean layout_printf(PangoLayout *layout, const gchar *format, ...)
 }
 
 /* setzt den Text eines Pango Layouts wie mit vprintf */
-gboolean layout_vprintf(PangoLayout *layout, const gchar *format, va_list arg)
+gboolean layout_vprintf(PangoLayout *layout, const gchar *format,
+                        va_list arg)
 {
     gchar *text;
 
@@ -76,26 +77,15 @@ gboolean label_printf(GtkWidget *label, const gchar *format, ...)
     gchar *text;
     va_list ap;
 
-/*    printf("label_printf\n");
-
-    printf("label: %p | format: %p [%s]\n", (gpointer) label, (gpointer) format, format); */
-
     va_start(ap, format);
     text = g_strdup_vprintf(format, ap);
     va_end(ap);
 
-
-    if (text == NULL) {
-        printf("text == NULL\n\n");
+    if (text == NULL)
         return FALSE;
-    }
-
-/*    printf("text: %p [%s]\n", (gpointer) text, text); */
 
     gtk_label_set_text(GTK_LABEL(label), text);
     g_free(text);
-
-/*    printf("\n"); */
 
     return TRUE;
 }
@@ -112,14 +102,15 @@ gint ipow(gint x, guint y)
     return z;
 }
 
-/* rundet eine Fließkommazahl auf eine bestimme Stelle hinter dem Komma */
+/* rundet eine Fließkommazahl auf eine bestimme Stelle
+   hinter dem Komma */
 gdouble round_digits(gdouble x, guint digits)
 {
     gint n;
 
     n = ipow(10, digits);
     x *= n;
-    x = ROUND(x, gint);
+    x = ROUND(x, glong);
     x /= n;
 
     return x;
@@ -207,15 +198,39 @@ gdouble closest_val(gdouble val, gint n, ...)
 /* entfernt ein Element aus einer Zahlen-Liste */
 void nlist_remove(gulong *array, gulong index, gulong len)
 {
-    /* guint i;
-
-    for (i = index + 1; i < len; i++)
-        array[i - 1] = array[i]; */
+    /* 
+     * Diese Version ist zu zeitaufwändig:
+     *
+     * gulong i;
+     *
+     * for (i = index + 1; i < len; i++)
+     *     array[i - 1] = array[i];
+     */
 
     array[index] = array[len - 1];
 }
 
-/* FIXME */
+/* schreibt die Zahl d schön */
+gchar *strdup_pretty_number(gdouble d, gboolean fract)
+{
+    gchar *str;
+
+    if (!fract) {
+        if (d > -10000 && d < 10000)
+            str = g_strdup_printf("%d", (gint) d);
+        else
+            str = g_strdup_printf("%.2e", d);
+    } else {
+        if ((d > -10000 && d < -0.01) || (d > 0.01 && d < 10000))
+            str = g_strdup_printf("%.2f", d);
+        else
+            str = g_strdup_printf("%.2e", d);
+    }
+
+    return str;
+}
+
+/* verändert die Hintergrundfarbe eines Widgets */
 void widget_modify_bg(GtkWidget *widget, GdkColor *color)
 {
     gtk_widget_modify_bg(widget, GTK_STATE_NORMAL, color);

@@ -29,10 +29,15 @@
 #include <gtk/gtk.h>
 
 /* passt das Atomfeld an eine veränderte Größe an */
-gboolean afield_resize(GtkWidget *darea, GdkEventConfigure *event, AtomField *af)
+gboolean afield_resize(GtkWidget *darea,
+                       GdkEventConfigure *event, AtomField *af)
 {
-    afield_arrange(af, darea);
-    afield_draw(darea, af);
+    IGNORE(event);
+
+    if (!af->uniform) {
+        afield_arrange(af, darea);
+        afield_draw(darea, af);
+    }
 
     return FALSE;
 }
@@ -59,7 +64,8 @@ void afield_draw_atom(GtkWidget *darea, AtomField *af, gulong n)
                        af->wide, af->wide);
 }
 
-void afield_tint(GtkWidget *darea, AtomField *af, gulong *atoms, gint states)
+void afield_tint(GtkWidget *darea, AtomField *af,
+                 gulong *atoms, gint states)
 {
     GtkWidget *top;
     GdkPixmap *pixmap;
@@ -76,6 +82,7 @@ void afield_tint(GtkWidget *darea, AtomField *af, gulong *atoms, gint states)
     new_color = (GdkColor *) g_malloc(sizeof(GdkColor));
     new_color->red = new_color->green = new_color->blue = 0;
 
+    /* Mischt die Farben */
     for (i = 0; i < states; i++) {
         percent = atoms[i] / (gdouble) af->number;
         new_color->red += (color[i])->red * percent;
@@ -95,13 +102,12 @@ void afield_tint(GtkWidget *darea, AtomField *af, gulong *atoms, gint states)
                        darea->allocation.width,
                        darea->allocation.height);
 
-    /* gibt den Bereich zum Zeichnen auf dem Bildschirm frei */
-    darea_update(darea);
-
     g_free(new_color);
 }
 
-void afield_distrib_decays(GtkWidget *darea, AtomField *af, gulong decays, gint state)
+/* verteilt die Atome auf dem Atomfeld */
+void afield_distrib_decays(GtkWidget *darea, AtomField *af,
+                           gulong decays, gint state)
 {
     gulong i, hit;
 
@@ -120,6 +126,8 @@ void afield_draw(GtkWidget *darea, AtomField *af)
         afield_draw_atom(darea, af, i);
 }
 
+/* testet, ob der Computer schnell genug für das
+   Atomfeld ist */
 gboolean afield_benchmark(GtkWidget *darea, AtomField *af, gdouble max_t)
 {
     MyTimer *timer;
@@ -128,10 +136,14 @@ gboolean afield_benchmark(GtkWidget *darea, AtomField *af, gdouble max_t)
     timer = timer_new(1.0);
 
     for (i = 0; i < af->number; i++) {
-        if (timer_elapsed(timer) > max_t)
+        if (timer_elapsed(timer) > max_t) {
+            timer_destroy(timer);
             return FALSE;
+        }
         afield_draw_atom(darea, af, i);
     }
+
+    timer_destroy(timer);
 
     return TRUE;
 }

@@ -46,13 +46,25 @@
 #define _(String) gettext (String)
 #define N_(String) gettext_noop (String)
 
-enum { GRAPH_NUMBER, GRAPH_ACTIVITY };
+#define decay_stat_n(a, g) \
+((a == 1) ? decay_stat_n1 : \
+(g == 2) ? decay_stat_n2_of_2 : \
+(g == 3) ? ((a == 2) ? decay_stat_n2_of_3 : decay_stat_n3_of_3) : \
+decay_stat_math_is_too_complicated)
+
+#define decay_stat_a(a, g) \
+((a == 1) ? decay_stat_a1 : \
+(g == 3) ? decay_stat_a2_of_3 : \
+decay_stat_math_is_too_complicated)
+
+enum { SIM_STOP = 1, SIM_QUIT };
 
 static void get_sim_input(GtkWidget *top, SimData *data);
 
 static void resume_sim(GtkWidget *button, MyTimer *timer);
 static void pause_sim(GtkWidget *button, MyTimer *timer);
-static void stop_sim(GtkWidget *button, gboolean *quit);
+static void stop_sim(GtkWidget *button, gint *leave);
+static void quit_sim(GtkWidget *button_quit, gint *leave);
 
 static void change_speed(GtkWidget *scale, MyTimer *timer);
 
@@ -64,41 +76,78 @@ static gdouble decay_stat_n3_of_3(gdouble t, SimData *data);
 static gdouble decay_stat_a1(gdouble t, SimData *data);
 static gdouble decay_stat_a2_of_3(gdouble t, SimData *data);
 
-static gdouble calc_duration(gulong number, gdouble thalf);
+static gdouble decay_stat_math_is_too_complicated(gdouble t, SimData *data);
 
-static gint decay_poisson(gdouble t, gulong n, gdouble thalf, gsl_rng *rand);
+static gdouble calc_duration(SimData *data);
+
+static gint decay_binomial(gdouble t, gulong n,
+                           gdouble thalf, gsl_rng *rand);
+
+/* erstellt die Simulationsstruktur */
+SimData *simdata_new(gsl_rng *rand)
+{
+    SimData *sdata;
+
+    sdata = (SimData *) g_malloc(sizeof(SimData));
+
+    sdata->afield = NULL;
+    sdata->coord_number = NULL;
+    sdata->coord_activity = NULL;
+    sdata->rand = rand;
+
+    sdata->atoms = (gulong *) g_malloc(ATOM_STATES * sizeof(gulong));
+    sdata->thalf = (gdouble *)
+                   g_malloc((ATOM_STATES - 1) * sizeof(gdouble));
+
+    return sdata;
+}
+
+/* stellt den Speicher der Simulationsstruktur
+   wieder zur Verfügung */
+void simdata_free(SimData *sdata)
+{
+    /* FIXME */
+    g_free(sdata);
+}
 
 /* startet die Simulation */
 void sim_decay(GtkWidget *button_start, SimData *sdata)
 {
-    GtkWidget *top, **darea, *button_stop,
+    GtkWidget *top, **darea, *button_stop, *button_quit,
               *spin_number, **spin_htime,
               **label_atom, *label_time,
               *spin_states, **radio_graph_type,
               **check_graph_real, **check_graph_stat,
-              **check_graph_step,
+              **check_graph_step, **progress_atom,
               *scale_speed, **menu_htime;
     GdkGC **style_graph_real, **style_graph_stat;
-    gdouble t, tstart, tnext, told, tstep, tloop, activities[ATOM_STATES - 1],
-            tnext_graph, told_graph, tstep_graph,tloop_graph;
-    gint i, state, graph_type;
+    gdouble t, tstart, tnext, told, tstep, tloop,
+            activities[ATOM_STATES - 1],
+            tnext_graph, told_graph, tstep_graph,
+            tloop_graph, duration, graph_step_rate,
+            thalf_max;
+    gint i, state, leave;
+    gint (*decay_real)(gdouble, gulong, gdouble, gsl_rng *);
     gulong number, decays[ATOM_STATES], decays_buf[ATOM_STATES];
-    gboolean quit, changed, showfps;
+    gboolean changed, showfps;
     gpointer func;
 
     Graph **graph_number_real, **graph_number_stat, **graph_number_step,
-          **graph_activity_real, **graph_activity_stat, **graph_activity_step;
+          **graph_activity_real, **graph_activity_stat,
+          **graph_activity_step;
     MyTimer *timer;
 
     /* holt ein paar gespeicherte Widgets */
     top = gtk_widget_get_toplevel(button_start);
     button_stop = g_object_get_data(G_OBJECT(top), "button_stop");
+    button_quit = g_object_get_data(G_OBJECT(top), "button_quit");
     spin_number = g_object_get_data(G_OBJECT(top), "spin_number");
     spin_htime = g_object_get_data(G_OBJECT(top), "spin_htime");
     menu_htime = g_object_get_data(G_OBJECT(top), "menu_htime");
     darea = g_object_get_data(G_OBJECT(top), "darea");
     label_atom = g_object_get_data(G_OBJECT(top), "label_atom");
     label_time = g_object_get_data(G_OBJECT(top), "label_time");
+    progress_atom = g_object_get_data(G_OBJECT(top), "progress_atom");
     scale_speed = g_object_get_data(G_OBJECT(top), "scale_speed");
     spin_states = g_object_get_data(G_OBJECT(top), "spin_states");
     radio_graph_type = g_object_get_data(G_OBJECT(top), "radio_graph_type");
@@ -108,17 +157,17 @@ void sim_decay(GtkWidget *button_start, SimData *sdata)
     style_graph_real = g_object_get_data(G_OBJECT(top), "style_graph_real");
     style_graph_stat = g_object_get_data(G_OBJECT(top), "style_graph_stat");
 
-    /* FIXME */
+    /* holt Einstellungen */
     get_sim_input(top, sdata);
     showfps = opt_get_showfps();
     number = sdata->atoms[0];
-    graph_type = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(radio_graph_type[0])) ? GRAPH_NUMBER : GRAPH_ACTIVITY;
+    duration = calc_duration(sdata);
 
     /* erstellt, wenn nötig, das Atomfeld, oder passt es an */
     if (sdata->afield == NULL) {
         sdata->afield = afield_new(sdata->atoms[0], darea[0]);
         g_signal_connect(G_OBJECT(darea[0]), "configure_event",
-                                  G_CALLBACK(afield_resize), sdata->afield);
+                         G_CALLBACK(afield_resize), sdata->afield);
     } else {
         afield_reset(sdata->afield, sdata->atoms[0]);
         afield_arrange(sdata->afield, darea[0]);
@@ -128,266 +177,348 @@ void sim_decay(GtkWidget *button_start, SimData *sdata)
 
     /* zeichnet das Atomfeld auf den Zeichenbereich */
     darea_clear(darea[0]);
-/*        afield_benchmark(darea[0], sdata->afield, 1.0)); */
     if (!sdata->afield->uniform)
         afield_draw(darea[0], sdata->afield);
     else
         afield_tint(darea[0], sdata->afield, sdata->atoms, sdata->states);
+    darea_update(darea[0]);
 
 
     /* erstellt, wenn nötig, neue Koordinatensysteme */
     if (sdata->coord_number == NULL) {
-        sdata->coord_number = coord_system_new(darea[1], "t", "s", "N", "", TRUE, FALSE,
-                                               0, calc_duration(sdata->atoms[0], sdata->thalf[0]),
-                                               0, sdata->atoms[0]);
+        sdata->coord_number = coord_system_new(darea[1],
+            "t", "s", "N", "", TRUE, FALSE,
+            0, duration, 0, sdata->atoms[0]);
         g_signal_connect(G_OBJECT(radio_graph_type[0]), "toggled",
-                                  G_CALLBACK(coord_system_store), sdata->coord_number);
-
-    } else {
+                         G_CALLBACK(coord_system_store),
+                         sdata->coord_number);
+    } else
         coord_system_adjust(sdata->coord_number, darea[1],
-                            0, calc_duration(sdata->atoms[0], sdata->thalf[0]),
-                            0, sdata->atoms[0]);
-    }
-        
+            0, duration, 0, sdata->atoms[0]);
+
     if (sdata->coord_activity == NULL) {
-        sdata->coord_activity = coord_system_new(darea[1], "t", "s", "A", "Bq", TRUE, TRUE,
-                                                 0, calc_duration(sdata->atoms[0], sdata->thalf[0]),
-                                                 0, decay_stat_a1(0, sdata));
+        sdata->coord_activity = coord_system_new(darea[1],
+            "t", "s", "A", "Bq", TRUE, TRUE,
+            0, duration, 0, decay_stat_a1(0, sdata));
         g_signal_connect(G_OBJECT(radio_graph_type[1]), "toggled",
-                                  G_CALLBACK(coord_system_store), sdata->coord_activity);
-    } else {
+                         G_CALLBACK(coord_system_store),
+                         sdata->coord_activity);
+    } else
         coord_system_adjust(sdata->coord_activity, darea[1],
-                            0, calc_duration(sdata->atoms[0], sdata->thalf[0]),
+                            0, duration,
                             0, decay_stat_a1(0, sdata));
-    }
 
     /* verankert das richtige Koordinatensystem im Zeichenbereich
        und zeichnet es */
     darea_clear(darea[1]);
-    if (graph_type == GRAPH_NUMBER) {
-        g_object_set_data(G_OBJECT(darea[1]), "coord", sdata->coord_number);
+    if (gtk_toggle_button_get_active(
+                GTK_TOGGLE_BUTTON(radio_graph_type[0]))) {
+        g_object_set_data(G_OBJECT(darea[1]), "coord",
+                          sdata->coord_number);
         coord_system_draw(darea[1], sdata->coord_number);
     } else {
-        g_object_set_data(G_OBJECT(darea[1]), "coord", sdata->coord_activity);
+        g_object_set_data(G_OBJECT(darea[1]), "coord",
+                          sdata->coord_activity);
         coord_system_draw(darea[1], sdata->coord_activity);
     }
+    darea_update(darea[1]);
+
 
     /* reserviert Speicherplatz für die Graphen */
-    graph_number_real = (Graph **) g_malloc(sdata->states * sizeof(Graph *));
-    graph_number_stat = (Graph **) g_malloc(sdata->states * sizeof(Graph *));
-    graph_number_step = (Graph **) g_malloc(sdata->states * sizeof(Graph *));
-    graph_activity_real = (Graph **) g_malloc((sdata->states - 1) * sizeof(Graph *));
-    graph_activity_stat = (Graph **) g_malloc((sdata->states - 1) * sizeof(Graph *));
-    graph_activity_step = (Graph **) g_malloc((sdata->states - 1) * sizeof(Graph *));
+    graph_number_real = (Graph **)
+                        g_malloc(sdata->states * sizeof(Graph *));
+    graph_number_stat = (Graph **)
+                        g_malloc(sdata->states * sizeof(Graph *));
+    graph_number_step = (Graph **)
+                        g_malloc(sdata->states * sizeof(Graph *));
+    graph_activity_real = (Graph **)
+                          g_malloc((sdata->states - 1) * sizeof(Graph *));
+    graph_activity_stat = (Graph **)
+                          g_malloc((sdata->states - 1) * sizeof(Graph *));
+    graph_activity_step = (Graph **)
+                          g_malloc((sdata->states - 1) * sizeof(Graph *));
 
-    /* beginnt die Graphen des realen Zerfall */
-    graph_number_real[0] = graph_new(style_graph_real[0], gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_graph_real[0])), 0, sdata->atoms[0]);
+    /* setzt die Aktualisierungsrate der Graphen ein */
+    thalf_max = fmax_n(sdata->states - 1, sdata->thalf);
+    tstep_graph = thalf_max / 100.0;
+    graph_step_rate = (ABS(thalf_max - sdata->thalf[0]) > 100)
+                      ? thalf_max : sdata->thalf[0];
+
+    /* beginnt die Graphen des realen Zerfalls */
+    graph_number_real[0] = graph_new(style_graph_real[0],
+        gtk_toggle_button_get_active(
+            GTK_TOGGLE_BUTTON(check_graph_real[0])),
+        0, sdata->atoms[0]);
     for (i = 1; i < sdata->states; i++)
-        graph_number_real[i] = graph_new(style_graph_real[i], gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_graph_real[i])), 0, 0);
-
+        graph_number_real[i] = graph_new(style_graph_real[i],
+            gtk_toggle_button_get_active(
+                GTK_TOGGLE_BUTTON(check_graph_real[i])),
+            0, 0);
     for (i = 0; i < (sdata->states - 1); i++)
-        graph_activity_real[i] = graph_new(style_graph_real[i], gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_graph_real[i])), 0, 0);
-
-    /* setzt die FIXME */
-    tstep_graph = fmax_n(sdata->states - 1, sdata->thalf) / 100.0;
+        graph_activity_real[i] = graph_new(style_graph_real[i],
+            gtk_toggle_button_get_active(
+                GTK_TOGGLE_BUTTON(check_graph_real[i])),
+            0, 0);
 
     /* erstellt die Graphen des statistischen Zerfalls */
-    graph_number_stat[0] = graph_new_by_func((GraphFunc) decay_stat_n1, sdata, style_graph_stat[0],
-                                             gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_graph_stat[0])), 0,
-                                             calc_duration(sdata->atoms[0], sdata->thalf[0]), tstep_graph);
-    graph_number_step[0] = graph_step_new_by_func((GraphFunc) decay_stat_n1, sdata, style_graph_stat[0],
-                                                  gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_graph_step[0])), 0,
-                                                  calc_duration(sdata->atoms[0], sdata->thalf[0]), sdata->thalf[0]);
-    if (sdata->states == 2) {
-        graph_number_stat[1] = graph_new_by_func((GraphFunc) decay_stat_n2_of_2, sdata, style_graph_stat[1],
-                                                 gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_graph_stat[1])), 0,
-                                                 calc_duration(sdata->atoms[0], sdata->thalf[0]), tstep_graph);
-        graph_number_step[1] = graph_step_new_by_func((GraphFunc) decay_stat_n2_of_2, sdata, style_graph_stat[1],
-                                                      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_graph_step[1])), 0,
-                                                      calc_duration(sdata->atoms[0], sdata->thalf[0]), sdata->thalf[0]);
-    } else {
-        graph_number_stat[1] = graph_new_by_func((GraphFunc) decay_stat_n2_of_3, sdata, style_graph_stat[1],
-                                                 gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_graph_stat[1])), 0,
-                                                 calc_duration(sdata->atoms[0], sdata->thalf[0]), tstep_graph);
-        graph_number_step[1] = graph_step_new_by_func((GraphFunc) decay_stat_n2_of_3, sdata, style_graph_stat[1],
-                                                      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_graph_step[1])), 0,
-                                                      calc_duration(sdata->atoms[0], sdata->thalf[0]), sdata->thalf[1]);
-        graph_number_stat[2] = graph_new_by_func((GraphFunc) decay_stat_n3_of_3, sdata, style_graph_stat[2],
-                                                 gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_graph_stat[2])), 0,
-                                                 calc_duration(sdata->atoms[0], sdata->thalf[0]), tstep_graph);
-        graph_number_step[2] = graph_step_new_by_func((GraphFunc) decay_stat_n3_of_3, sdata, style_graph_stat[2],
-                                                      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_graph_step[2])), 0,
-                                                      calc_duration(sdata->atoms[0], sdata->thalf[0]), sdata->thalf[1]);
+    for (i = 0; i < sdata->states; i++) {
+        graph_number_stat[i] = graph_new_by_func(
+            (GraphFunc) decay_stat_n(i + 1, sdata->states), sdata,
+            style_graph_stat[i], gtk_toggle_button_get_active(
+                GTK_TOGGLE_BUTTON(check_graph_stat[i])),
+            0, duration, tstep_graph);
+        graph_number_step[i] = graph_step_new_by_func(
+            (GraphFunc) decay_stat_n(i + 1, sdata->states), sdata,
+            style_graph_stat[i], gtk_toggle_button_get_active(
+                GTK_TOGGLE_BUTTON(check_graph_step[i])),
+            0, duration, graph_step_rate);
+    }
+    for (i = 0; i < (sdata->states - 1); i++) {
+        graph_activity_stat[i] = graph_new_by_func(
+            (GraphFunc) decay_stat_a(i + 1, sdata->states), sdata,
+            style_graph_stat[i], gtk_toggle_button_get_active(
+                GTK_TOGGLE_BUTTON(check_graph_stat[i])),
+            0, duration, tstep_graph);
+        graph_activity_step[i] = graph_step_new_by_func(
+            (GraphFunc) decay_stat_a(i + 1, sdata->states), sdata,
+            style_graph_stat[i], gtk_toggle_button_get_active(
+                GTK_TOGGLE_BUTTON(check_graph_step[i])),
+            0, duration, graph_step_rate);
     }
 
-    /* FIXME */
-    graph_activity_stat[0] = graph_new_by_func((GraphFunc) decay_stat_a1, sdata, style_graph_stat[0],
-                                               gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_graph_stat[0])), 0,
-                                               calc_duration(sdata->atoms[0], sdata->thalf[0]), tstep_graph);
-    graph_activity_step[0] = graph_step_new_by_func((GraphFunc) decay_stat_a1, sdata, style_graph_stat[0],
-                                                    gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_graph_step[0])), 0,
-                                                    calc_duration(sdata->atoms[0], sdata->thalf[0]), sdata->thalf[0]);
-    if (sdata->states == 3) {
-        graph_activity_stat[1] = graph_new_by_func((GraphFunc) decay_stat_a2_of_3, sdata, style_graph_stat[1],
-                                                   gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_graph_stat[1])), 0,
-                                                   calc_duration(sdata->atoms[0], sdata->thalf[0]), tstep_graph);
-        graph_activity_step[1] = graph_step_new_by_func((GraphFunc) decay_stat_a2_of_3, sdata, style_graph_stat[1],
-                                                        gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_graph_step[1])), 0,
-                                                        calc_duration(sdata->atoms[0], sdata->thalf[0]), sdata->thalf[1]);
-    }
-
-    if (graph_type == GRAPH_NUMBER)
-        for (i = 0; i < sdata->states; i++) {
-            if ((graph_number_stat[i])->active)
-                graph_draw(graph_number_stat[i], darea[1], sdata->coord_number);
-            if ((graph_number_step[i])->active)
-                graph_draw(graph_number_step[i], darea[1], sdata->coord_number);
-        }
-    else
-        for (i = 0; i < (sdata->states - 1); i++) {
-            if ((graph_activity_stat[i])->active)
-                graph_draw(graph_activity_stat[i], darea[1], sdata->coord_activity);
-            if ((graph_activity_step[i])->active)
-                graph_draw(graph_activity_step[i], darea[1], sdata->coord_activity);
-        }
 
     /* verankert die Graphen im entsprechenden Koordinatensystem */
     coord_system_clear(sdata->coord_number);
-    coord_system_clear(sdata->coord_activity);
     for (i = 0; i < sdata->states; i++) {
-        coord_system_add_graph(sdata->coord_number, graph_number_real[i]);
-        coord_system_add_graph(sdata->coord_number, graph_number_stat[i]);
-        coord_system_add_graph(sdata->coord_number, graph_number_step[i]);
+        coord_system_add_graph(sdata->coord_number,
+                               graph_number_real[i]);
+        coord_system_add_graph(sdata->coord_number,
+                               graph_number_stat[i]);
+        coord_system_add_graph(sdata->coord_number,
+                               graph_number_step[i]);
     }
+    coord_system_clear(sdata->coord_activity);
     for (i = 0; i < (sdata->states - 1); i++) {
-        coord_system_add_graph(sdata->coord_activity, graph_activity_real[i]);
-        coord_system_add_graph(sdata->coord_activity, graph_activity_stat[i]);
-        coord_system_add_graph(sdata->coord_activity, graph_activity_step[i]);
+        coord_system_add_graph(sdata->coord_activity,
+                               graph_activity_real[i]);
+        coord_system_add_graph(sdata->coord_activity,
+                               graph_activity_stat[i]);
+        coord_system_add_graph(sdata->coord_activity,
+                               graph_activity_step[i]);
     }
 
 
     /* trennt die Callbackfunktionen wieder von den Auswahlkästen */
-    for (i = 0; i < sdata->states; i++) {
-        g_signal_handlers_disconnect_matched(G_OBJECT(check_graph_real[i]), G_SIGNAL_MATCH_FUNC, 0, 0, NULL, (gpointer) graph_toggle, NULL);
-        g_signal_handlers_disconnect_matched(G_OBJECT(check_graph_stat[i]), G_SIGNAL_MATCH_FUNC, 0, 0, NULL, (gpointer) graph_redraw, NULL);
-    }
-    /* verbindet die Auswahlboxen für die Graphen mit Callback-Funktionen */
-    for (i = 0; i < sdata->states; i++) {
-        g_signal_connect(G_OBJECT(check_graph_real[i]), "toggled", G_CALLBACK(graph_toggle), graph_number_real[i]);
-        g_signal_connect(G_OBJECT(check_graph_stat[i]), "toggled", G_CALLBACK(graph_toggle), graph_number_stat[i]);
-    }
-    for (i = 0; i < (sdata->states - 1); i++) {
-        g_signal_connect(G_OBJECT(check_graph_real[i]), "toggled", G_CALLBACK(graph_toggle), graph_activity_real[i]);
-        g_signal_connect(G_OBJECT(check_graph_stat[i]), "toggled", G_CALLBACK(graph_toggle), graph_activity_stat[i]);
-    }
-    for (i = 0; i < sdata->states; i++) {
-        g_signal_connect_swapped(G_OBJECT(check_graph_real[i]), "toggled", G_CALLBACK(graph_redraw), darea[1]);
-        g_signal_connect_swapped(G_OBJECT(check_graph_stat[i]), "toggled", G_CALLBACK(graph_redraw), darea[1]);
+    for (i = 0; i < ATOM_STATES; i++) {
+        g_signal_handlers_disconnect_matched(G_OBJECT(check_graph_real[i]),
+            G_SIGNAL_MATCH_FUNC, 0, 0, NULL, (gpointer) graph_toggle, NULL);
+        g_signal_handlers_disconnect_matched(G_OBJECT(check_graph_stat[i]),
+            G_SIGNAL_MATCH_FUNC, 0, 0, NULL, (gpointer) graph_toggle, NULL);
+        g_signal_handlers_disconnect_matched(G_OBJECT(check_graph_step[i]),
+            G_SIGNAL_MATCH_FUNC, 0, 0, NULL, (gpointer) graph_toggle, NULL);
+
+        g_signal_handlers_disconnect_matched(G_OBJECT(check_graph_real[i]),
+            G_SIGNAL_MATCH_FUNC, 0, 0, NULL, (gpointer) graph_redraw, NULL);
+        g_signal_handlers_disconnect_matched(G_OBJECT(check_graph_stat[i]),
+            G_SIGNAL_MATCH_FUNC, 0, 0, NULL, (gpointer) graph_redraw, NULL);
+        g_signal_handlers_disconnect_matched(G_OBJECT(check_graph_step[i]),
+            G_SIGNAL_MATCH_FUNC, 0, 0, NULL, (gpointer) graph_redraw, NULL);
     }
 
-    /* FIXME */
+    /* verbindet die Auswahlboxen für die Graphen
+       mit Callback-Funktionen */
+    for (i = 0; i < sdata->states; i++) {
+        g_signal_connect(G_OBJECT(check_graph_real[i]), "toggled",
+            G_CALLBACK(graph_toggle), graph_number_real[i]);
+        g_signal_connect(G_OBJECT(check_graph_stat[i]), "toggled",
+            G_CALLBACK(graph_toggle), graph_number_stat[i]);
+        g_signal_connect(G_OBJECT(check_graph_step[i]), "toggled",
+            G_CALLBACK(graph_toggle), graph_number_step[i]);
+    }
+    for (i = 0; i < (sdata->states - 1); i++) {
+        g_signal_connect(G_OBJECT(check_graph_real[i]), "toggled",
+            G_CALLBACK(graph_toggle), graph_activity_real[i]);
+        g_signal_connect(G_OBJECT(check_graph_stat[i]), "toggled",
+            G_CALLBACK(graph_toggle), graph_activity_stat[i]);
+        g_signal_connect(G_OBJECT(check_graph_step[i]), "toggled",
+            G_CALLBACK(graph_toggle), graph_activity_step[i]);
+    }
+    for (i = 0; i < sdata->states; i++) {
+        g_signal_connect_swapped(G_OBJECT(check_graph_real[i]), "toggled",
+            G_CALLBACK(graph_redraw), darea[1]);
+        g_signal_connect_swapped(G_OBJECT(check_graph_stat[i]), "toggled",
+            G_CALLBACK(graph_redraw), darea[1]);
+        g_signal_connect_swapped(G_OBJECT(check_graph_step[i]), "toggled",
+            G_CALLBACK(graph_redraw), darea[1]);
+    }
+
+    /* zeichnet alle ausgewählte Graphen */
+    graph_redraw(darea[1]);
+
+    /* setzt die Status-Anzeigen auf die Ausgangswerte */
+    status_update_atoms(label_atom, progress_atom, sdata->atoms, number);
+    status_update_time(label_time, 0.0); 
+
+    /* Setzt den Zerfalls-Buffer auf 0 */
     for (i = 0; i < sdata->states; i++)
         decays_buf[i] = 0;
 
-
-    /* setzt die Status-Anzeigen auf die Ausgangswerte */
-    status_update_atoms(label_atom, sdata->atoms);
-    status_update_time(label_time, 0.0); 
-
-    /* ersetzt den Start-Button durch den Pausebutton */
-    g_signal_handlers_block_by_func(G_OBJECT(button_start), (gpointer) sim_decay, sdata);
+    /* ersetzt den Start-Button durch den Pause-Button */
+    g_signal_handlers_block_by_func(G_OBJECT(button_start),
+                                    (gpointer) sim_decay, sdata);
     gtk_button_set_label(GTK_BUTTON(button_start), _("pause"));
     gtk_button_leave(GTK_BUTTON(button_start));
 
-    /* bereitet den Stop-Button vor */
-    quit = FALSE;
+    /* bereitet den Stop- und Beenden-Button vor */
+    leave = FALSE;
     gtk_widget_set_sensitive(button_stop, TRUE);
+    g_signal_connect(G_OBJECT(button_stop), "clicked",
+                     G_CALLBACK(stop_sim), &leave);
+    g_signal_handlers_block_matched(G_OBJECT(button_quit),
+                                    G_SIGNAL_MATCH_FUNC,
+                                    0, 0, NULL,
+                                    (gpointer) gtk_widget_destroy,
+                                    NULL);
+    g_signal_connect(G_OBJECT(button_quit), "clicked",
+                     G_CALLBACK(quit_sim), &leave);
 
-    /* setzt die Aktualisierungsrate auf FIXME */
-    if (opt_get_fps() == 0.0)
-        tstep = 0.0;
-    else
-        tstep = 1.0 / opt_get_fps();
 
-    /* startet den timer */
+    /* wählt die reale Zerfallsfunktion aus */
+    decay_real = decay_binomial;
+
+    /* setzt die Aktualisierungsrate auf 0
+       oder den per Kommandozeile angegebenen Wert */
+    tstep = (!opt_get_fps()) ? 0.0 : 1.0 / opt_get_fps();
+
+    /* startet den Timer */
     timer = timer_new(scale_get_speed(scale_speed));
 
-    /* verknüpft den Pause- und Stop-Button mit Callback-Funktionen */
-    g_signal_connect(G_OBJECT(button_start), "clicked", G_CALLBACK(pause_sim), timer);
-    g_signal_connect(G_OBJECT(button_stop), "clicked", G_CALLBACK(stop_sim), &quit);
-    g_signal_connect(G_OBJECT(scale_speed), "value-changed", G_CALLBACK(change_speed), timer);
+    /* verknüpft den Pause-Button und den Geschwindigkeitsregler
+       mit Callback-Funktionen */
+    g_signal_connect(G_OBJECT(button_start), "clicked",
+                     G_CALLBACK(pause_sim), timer);
+    g_signal_connect(G_OBJECT(scale_speed), "value-changed",
+                     G_CALLBACK(change_speed), timer);
 
     /* setzt Zeitvariablen auf die (wenige) bisher vergangene Zeit */
-    tstart = tnext = told = tnext_graph = told_graph = timer_elapsed(timer);
+    t = tstart = tnext = told =
+    tnext_graph = told_graph =
+    timer_elapsed(timer);
+
 
     /* der Versuch läuft solange, bis alle Atome in den letzten Zustand
        gekommen sind, oder der Nutzer den Stop-Button drückt */
-    while (sdata->atoms[sdata->states-1] < number && (!quit)) {
+    while (sdata->atoms[sdata->states-1] < number && (!leave)) {
+
+        /* in t wird die seit dem Start der Simulation vergangene Zeit
+           gespeichert */
         t = timer_elapsed(timer) - tstart;
+
+        /* wenn die Aktualisierunsrate maximal sein soll, dann wird
+           eventuell gewartet */
         if (t >= tnext) {
+
+            /* tloop ist die Zeit eines Schleifendurchlaufs, zu
+               ihrer Ermittlung wird told als Hilfsvariable
+               eingesetzt */
             tloop = t - told;
             told = t;
 
+            /* gibt eventuell die Schleifendurchläufe pro Sekunde aus */
             if (showfps)
                 printf("fps: %.2f\n", 1.0 / tloop);
 
+            /* noch ist nichts zerfallen */
             changed = FALSE;
+
+            /* Überprüfe für jedes instabile Element ... */
             for (state = sdata->states - 2; state >= 0; state--) {
-                decays[state] = (sdata->atoms[state] > 0) ? decay_poisson(tloop, sdata->atoms[state], sdata->thalf[state], sdata->rand) : 0;
+
+                /* ... ob es im Zeitraum tloop Zerfälle gab ... */
+                decays[state] = (sdata->atoms[state] > 0)
+                    ? decay_real(tloop, sdata->atoms[state],
+                                 sdata->thalf[state], sdata->rand)
+                    : 0;
+
+                /* ... und speichere sie im Buffer. */
+                decays_buf[state] += decays[state];
+
+                /* setze changed auf TRUE, falls etwas zerfallen ist */
                 if (decays[state] > 0)
                     changed = TRUE;
-                decays_buf[state] += decays[state];
             }
 
+            /* Wenn etwas zerfallen ist, dann ... */
             if (changed) {
+                /* ... wird für jedes instabile Element ... */
                 for (state = sdata->states - 2; state >= 0; state--) {
-                    if (sdata->afield->uniform)
-                        afield_tint(darea[0], sdata->afield, sdata->atoms, sdata->states);
-                    else
-                        afield_distrib_decays(darea[0], sdata->afield, decays[state], state);
 
+                    /* ... das Atomfeld aktualisiert ... */
+                    if (sdata->afield->uniform)
+                        afield_tint(darea[0], sdata->afield,
+                                    sdata->atoms, sdata->states);
+                    else
+                        afield_distrib_decays(darea[0], sdata->afield,
+                                              decays[state], state);
+                    darea_update(darea[0]);
+
+                    /* ... und die Mengenverhältnisse aktualisiert. */
                     sdata->atoms[state + 0] -= decays[state];
                     sdata->atoms[state + 1] += decays[state];
                 }
 
-                status_update_atoms(label_atom, sdata->atoms);
-
-                
+                /* aktualisiert die Statusanzeige der Atome */
+                status_update_atoms(label_atom, progress_atom,
+                                    sdata->atoms, number);
             }
 
+            /* dient zum Einhalten der Aktualisierungsrate */
             tnext += tstep;
         }
 
+        /* für die Graphen gibt es aus Performance-Gründen eine
+           eigene Aktualisierungsrate */
         if (t >= tnext_graph) {
             tloop_graph = t - told_graph;
             told_graph = t;
 
+            /* berechnet die Aktivitäten */
             for (i = 0; i < (sdata->states - 1); i++) {
                 activities[i] = decays_buf[i] / tloop_graph;
                 decays_buf[i] = 0;
             }
 
-/*            graph_add(graph_number_real[0], t, sdata->atoms[0] / (gdouble) sdata->atoms[1]); */
-            graph_add(graph_number_real[0], t, sdata->atoms[0]);
-            for (state = 1; state < sdata->states; state++)
+            /* fügt neue Punkte zu den Graphen hinzu */
+            for (state = 0; state < sdata->states; state++)
                 graph_add(graph_number_real[state], t, sdata->atoms[state]);
             for (state = 0; state < (sdata->states - 1); state++)
                 graph_add(graph_activity_real[state], t, activities[state]);
 
-            darea_update(darea[0]);
+            /* zeichnet die jeweils letzten Punkte */
             graph_update(darea[1]);
             darea_update(darea[1]);
 
+            /* s. oben */
             tnext_graph += tstep_graph;
         }
-        
+
+        /* aktualisiert die Zeitanzeige */
         status_update_time(label_time, t); 
 
         /* wenn irgendwelche Toolkit-Operationen anstehen, dann ist jetzt
            Gelegenheit dazu, diese auszuführen */
-        while (gtk_events_pending())
-            gtk_main_iteration();
+        g_main_context_iteration(NULL, FALSE);
     }
+
+    /* Fügt die Endpunkte zum Graphen hinzu ... */
+    for (state = 0; state < sdata->states; state++)
+        graph_add(graph_number_real[state], t, sdata->atoms[state]);
+    for (state = 0; state < (sdata->states - 1); state++)
+        graph_add(graph_activity_real[state], t, activities[state]);
+
+    /* ... und zeichnet sie. */
+    graph_update(darea[1]);
+    darea_update(darea[1]);
 
     /* ersetzt den Pause-Button wieder durch den Start-button */
     func = (gpointer) ((timer_is_running(timer)) ? pause_sim : resume_sim);
@@ -397,7 +528,7 @@ void sim_decay(GtkWidget *button_start, SimData *sdata)
                                          func,
                                          NULL);
 
-    /* FIXME */
+    /* trennt den Geschwindigkeitsregler wieder von seiner Funktion */
     g_signal_handlers_disconnect_matched(G_OBJECT(scale_speed),
                                          G_SIGNAL_MATCH_FUNC,
                                          0, 0, NULL,
@@ -415,9 +546,22 @@ void sim_decay(GtkWidget *button_start, SimData *sdata)
                                          NULL);
     gtk_widget_set_sensitive(button_stop, FALSE);
 
+    /* setzt den Beenden-Button wieder zurück */
+    g_signal_handlers_disconnect_matched(G_OBJECT(button_quit),
+                                         G_SIGNAL_MATCH_FUNC,
+                                         0, 0, NULL,
+                                         (gpointer) quit_sim,
+                                         NULL);
+    g_signal_handlers_unblock_matched(G_OBJECT(button_quit),
+                                      G_SIGNAL_MATCH_FUNC,
+                                      0, 0, NULL,
+                                      (gpointer) gtk_widget_destroy,
+                                      NULL);
+
     /* bereitet den Start-Button auf neue Simulation vor */
     gtk_button_set_label(GTK_BUTTON(button_start), _("start"));
-    g_signal_handlers_unblock_by_func(G_OBJECT(button_start), (gpointer) sim_decay, sdata);
+    g_signal_handlers_unblock_by_func(G_OBJECT(button_start),
+                                      (gpointer) sim_decay, sdata);
 
 
     /* stellt den Speicher der erstellten Objekte wieder zur Verfügung */
@@ -428,6 +572,11 @@ void sim_decay(GtkWidget *button_start, SimData *sdata)
     g_free(graph_activity_stat);
     g_free(graph_activity_step);
     timer_destroy(timer);
+
+    /* wenn der Beenden-Button gedrückt wurde, wird
+       das GUI zerstört */
+    if (leave == SIM_QUIT)
+        gtk_widget_destroy(top);
 }
 
 /* fährt mit der Simulation fort */
@@ -445,70 +594,101 @@ static void resume_sim(GtkWidget *button, MyTimer *timer)
 static void pause_sim(GtkWidget *button, MyTimer *timer)
 {
     timer_stop(timer);
-    g_signal_handlers_disconnect_by_func(G_OBJECT(button), (gpointer) pause_sim, timer);
-    g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(resume_sim), timer);
+    g_signal_handlers_disconnect_by_func(G_OBJECT(button),
+        (gpointer) pause_sim, timer);
+    g_signal_connect(G_OBJECT(button), "clicked",
+        G_CALLBACK(resume_sim), timer);
     gtk_button_set_label(GTK_BUTTON(button), _("resume"));
 }
 
 /* stoppt die Simulation */
-static void stop_sim(GtkWidget *button_stop, gboolean *quit)
+static void stop_sim(GtkWidget *button_stop, gint *leave)
 {
     IGNORE(button_stop);
-    *quit = TRUE;
+    *leave = SIM_STOP;
 }
 
+/* beendet die Simulation */
+static void quit_sim(GtkWidget *button_quit, gint *leave)
+{
+    IGNORE(button_quit);
+    *leave = SIM_QUIT;
+}
+
+/* ändert die Geschwindigkeit */
 static void change_speed(GtkWidget *scale, MyTimer *timer)
 {
     timer_set_speed(timer, scale_get_speed(scale));
 }
 
-/* berechnet die Dauer eines Zerfalls */
-static gdouble calc_duration(gulong number, gdouble thalf)
+/* berechnet die ungefähre Dauer des Vorgangs */
+static gdouble calc_duration(SimData *data)
 {
-    return -thalf * log2(1.0 / number) + 2 * thalf;
+    gdouble thalf_max;
+
+    thalf_max =  fmax_n(data->states - 1, data->thalf);
+
+    return -  thalf_max * log2(1.0 / data->atoms[0]) + thalf_max;
 }
 
-/* die exponentielle Wachstumsfunktion */
 static gdouble decay_stat_n1(gdouble t, SimData *data)
 {
-    return (gulong) ((data->atoms[0] * pow(0.5, (t / data->thalf[0]))) + 0.5);
+    return (gulong) ((data->atoms[0] *
+                    pow(0.5, (t / data->thalf[0]))) + 0.5);
 }
 
 static gdouble decay_stat_n2_of_2(gdouble t, SimData *data)
 {
-    return (gulong) ((data->atoms[0] * (1 - pow(0.5, (t / data->thalf[0])))) + 0.5);
+    return (gulong) ((data->atoms[0] -
+                    (data->atoms[0] * pow(0.5, (t / data->thalf[0])))) + 0.5);
 }
 
 static gdouble decay_stat_n2_of_3(gdouble t, SimData *data)
 {
-    return (gulong) ((data->atoms[0] * ((data->thalf[1] / (data->thalf[0] - data->thalf[1])) * (pow(0.5, (t / data->thalf[0])) - pow(0.5, (t / data->thalf[1]))))) + 0.5);
+    return (gulong) (((data->atoms[0] * data->thalf[1] *
+                    (pow(0.5, (t / data->thalf[0])) -
+                    pow(0.5, (t / data->thalf[1])))) /
+                    (data->thalf[0] - data->thalf[1])) + 0.5); 
 }
 
 static gdouble decay_stat_n3_of_3(gdouble t, SimData *data)
 {
-    return (gulong) ((data->atoms[0] * (1 - ((data->thalf[0] * pow(0.5, (t / data->thalf[0])) - data->thalf[1] * pow(0.5, (t / data->thalf[1]))) / (data->thalf[0] - data->thalf[1])))) + 0.5);
+    return (gulong) ((data->atoms[0] -
+                    (data->atoms[0] * ((data->thalf[0] *
+                    pow(0.5, (t / data->thalf[0])) -
+                    data->thalf[1] * pow(0.5, (t / data->thalf[1]))) /
+                    (data->thalf[0] - data->thalf[1])))) + 0.5);
 }
 
 static gdouble decay_stat_a1(gdouble t, SimData *data)
 {
-    return data->atoms[0] * pow(0.5, (t / data->thalf[0])) * (log(2) / data->thalf[0]);
+    return (data->atoms[0] * pow(0.5, (t / data->thalf[0])) * log(2)) /
+           data->thalf[0];
 }
 
 static gdouble decay_stat_a2_of_3(gdouble t, SimData *data)
 {
-    return data->atoms[0] * ((log(2) / (data->thalf[0] - data->thalf[1])) * (pow(0.5, (t / data->thalf[0])) - pow(0.5, (t / data->thalf[1]))));
+    return (data->atoms[0] * log(2) * (pow(0.5, (t / data->thalf[0])) -
+           pow(0.5, (t / data->thalf[1])))) /
+           (data->thalf[0] - data->thalf[1]);
 }
 
-/* berechnet über die Poisson-Verteilung, wieviele von den n Atomen
-   mit der Halbwertszeit thalf im Zeitraum t zerfallen */
-static gint decay_poisson(gdouble t, gulong n, gdouble thalf, gsl_rng *rand)
+static gdouble decay_stat_math_is_too_complicated(gdouble t, SimData *data)
 {
-    gulong x;
-   /* return (gsl_ran_binomial(rand, (1.0 - pow(0.5, (t / thalf))), n)); */
-    x = gsl_ran_poisson(rand, ((1.0 - pow(0.5, (t / thalf)))) * n);
-   return (x > n) ? n : x;
+    IGNORE(t);
+    IGNORE(data);
+    return 0.000;
 }
 
+/* berechnet über die Binomial-Verteilung, wieviele von den n Atomen
+   mit der Halbwertszeit thalf im Zeitraum t zerfallen */
+static gint decay_binomial(gdouble t, gulong n,
+                           gdouble thalf, gsl_rng *rand)
+{
+    return gsl_ran_binomial(rand, 1.0 - pow(0.5, (t / thalf)), n);
+}
+
+/* holt die Eingaben des Nutzers */
 static void get_sim_input(GtkWidget *top, SimData *data)
 {
     GtkWidget *spin_states, *spin_number, **spin_htime, **menu_htime;
@@ -519,11 +699,19 @@ static void get_sim_input(GtkWidget *top, SimData *data)
     spin_htime = g_object_get_data(G_OBJECT(top), "spin_htime");
     menu_htime = g_object_get_data(G_OBJECT(top), "menu_htime");
 
-    /* holt die Eingaben des Nutzers */
-    data->states = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spin_states));
-    data->atoms[0] = (gulong) gtk_spin_button_get_value(GTK_SPIN_BUTTON(spin_number));
+    data->states = gtk_spin_button_get_value_as_int(
+                       GTK_SPIN_BUTTON(spin_states));
+    data->atoms[0] = (gulong)
+                     gtk_spin_button_get_value(
+                             GTK_SPIN_BUTTON(spin_number));
+
     for (i = 1; i < ATOM_STATES ; i++)
         data->atoms[i] = 0;
     for (i = 0; i < (data->states - 1); i++)
-        data->thalf[i] = gtk_spin_button_get_value(GTK_SPIN_BUTTON(spin_htime[i])) * GPOINTER_TO_INT(g_object_get_data(G_OBJECT(gtk_menu_get_active(GTK_MENU(gtk_option_menu_get_menu(GTK_OPTION_MENU(menu_htime[i]))))), "factor"));
+        data->thalf[i] = gtk_spin_button_get_value(
+                         GTK_SPIN_BUTTON(spin_htime[i])) *
+                         GPOINTER_TO_INT(g_object_get_data(G_OBJECT(
+                         gtk_menu_get_active(GTK_MENU(
+                         gtk_option_menu_get_menu(GTK_OPTION_MENU(
+                         menu_htime[i]))))), "factor"));
 }
