@@ -3,6 +3,14 @@
 
 #include "status.h"
 
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include "gettext.h"
+#define _(String) gettext (String)
+#define N_(String) gettext_noop (String)
+
 static gint label_printf(GtkWidget *label, const gchar *format, ...)
 {
     gchar *text;
@@ -30,10 +38,10 @@ GtkWidget *create_status_field(GtkWidget *parent_box)
     box = gtk_vbox_new(FALSE, 20);
     gtk_box_pack_start(GTK_BOX(parent_box), box, FALSE, FALSE, 20);
 
-    l1 = gtk_label_new("Mutter-Atome: -");
-    l2 = gtk_label_new("Tochter-Atome: -");
-    l3 = gtk_label_new("Enkel-Atome: -");
-    ltime = gtk_label_new("Zeit: -");
+    l1 = gtk_label_new(_("mother atoms: -"));
+    l2 = gtk_label_new(_("doughter atoms: -"));
+    l3 = gtk_label_new(_("grandchild atoms: -"));
+    ltime = gtk_label_new(_("time: -"));
 
     gtk_box_pack_start(GTK_BOX(box), l1, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box), l2, FALSE, FALSE, 0);
@@ -54,7 +62,7 @@ GtkWidget *create_status_field(GtkWidget *parent_box)
     return box;
 }
 
-void update_status_atoms(GtkWidget *widget, gint32 n1, gint32 n2, gint32 n3)
+void update_status_atoms(GtkWidget *widget, gint n1, gint n2, gint n3)
 {
     GtkWidget *top, *l1, *l2, *l3;
 
@@ -64,9 +72,9 @@ void update_status_atoms(GtkWidget *widget, gint32 n1, gint32 n2, gint32 n3)
     l2 = g_object_get_data(G_OBJECT(top), "2_status");
     l3 = g_object_get_data(G_OBJECT(top), "3_status");
 
-    label_printf(l1, "Mutter-Atome: %d", n1);
-    label_printf(l2, "Tochter-Atome: %d", n2);
-    label_printf(l3, "Enkel-Atome: %d", n3);
+    label_printf(l1, _("mother atoms: %d"), n1);
+    label_printf(l2, _("doughter atoms: %d"), n2);
+    label_printf(l3, _("grandchild atoms: %d"), n3);
 }
 
 void update_status_time(GtkWidget *widget, gdouble time)
@@ -76,5 +84,5 @@ void update_status_time(GtkWidget *widget, gdouble time)
     top = gtk_widget_get_toplevel(widget);
 
     ltime = g_object_get_data(G_OBJECT(top), "time_status");
-    label_printf(ltime, "Zeit: %d", (gint) time);
+    label_printf(ltime, _("time: %.3f"), time);
 }

@@ -1,43 +1,74 @@
 #include <stdio.h>
 #include <gtk/gtk.h>
 
+#include "coord.h"
 #include "graph.h"
+#include "ui_graph.h"
 
-CoordSystem *create_coord_system(gint field_width, gint field_height)
+Point *point_alloc(gdouble x, gdouble y)
 {
-    CoordSystem *coord;
-    gint x_axis, y_axis;
+    Point *p;
 
-    coord = (CoordSystem *) g_malloc(sizeof(CoordSystem));
+    p = g_malloc(sizeof(Point));
+    p->x = x;
+    p->y = y;
 
-    x_axis = 0.95 * field_width;
-    y_axis = 0.95 * field_height;
-
-    coord->len_top = 0.95 * y_axis;
-    coord->len_bottom = y_axis - coord->len_top;
-
-    coord->len_right = 0.95 * x_axis;
-    coord->len_left = x_axis - coord->len_right;
-
-    coord->zero.x = ((field_width - x_axis) / 2) + coord->len_left;
-    coord->zero.y = ((field_height - y_axis) / 2) + coord->len_top;
-
-    coord->unit = 20;
-
-    return coord;
+    return p;
 }
 
-void destroy_coord_system(CoordSystem *coord)
+Point point_new(gdouble x, gdouble y)
 {
-    g_free(coord);
+    Point p;
+
+    p.x = x;
+    p.y = y;
+
+    return p;
 }
 
-Point coord_get_real_point(Point coord_point, CoordSystem *coord)
+
+Graph *graph_new(const gchar *style)
 {
-    Point real_point;
+    Graph *gr;
 
-    real_point.x = coord->zero.x + coord_point.x;
-    real_point.y = coord->zero.y - coord_point.y;
+    gr = (Graph *) g_malloc(sizeof(Graph));
 
-    return real_point;
+    gr->style = style;
+    gr->points = NULL;
+
+    return gr;
+}
+
+void graph_draw_func(GraphFunc *gf, GtkWidget *darea, CoordSystem *coord)
+{
+    gdouble step, x, y, x_old, y_old;
+    
+    step = 1 / coord->x_fact;
+
+    x_old = coord->min_x;
+    y_old = gf->func(x_old, gf->data);
+
+    for (x = coord->min_x; x <= coord->max_x; x += step) {
+        y = gf->func(x, gf->data);
+        if (x != coord->min_x)
+            graph_draw_line(darea, coord,
+                            x_old, y_old,
+                            x, y,
+                            "style2");
+        x_old = x;
+        y_old = y;
+    }
+}
+
+void graph_add(Graph *gr, Point *p)
+{
+    gr->points = g_list_append(gr->points, p);
+    gr->points = g_list_last(gr->points);
+}
+    
+
+void graph_free(Graph *gr)
+{
+    g_list_free(gr->points);
+    g_free(gr);
 }

@@ -3,31 +3,38 @@
 
 #include <glib.h>
 
+#include "coord.h"
+#include "sim.h"
+
 typedef struct _Point Point;
 
 struct _Point {
-    gint x;
-    gint y;
+    gdouble x;
+    gdouble y;
 };
 
 
-typedef struct _CoordSystem CoordSystem;
+typedef struct _Graph Graph;
 
-struct _CoordSystem {
-    Point zero;
-
-    gint unit;
-
-    gint len_top;
-    gint len_left;
-    gint len_bottom;
-    gint len_right;
+struct _Graph {
+    const gchar *style;
+    GList *points;
 };
 
-CoordSystem *create_coord_system(gint field_width, gint field_height);
 
-Point coord_get_real_point(Point coord_point, CoordSystem *coord);
+typedef struct _GraphFunc GraphFunc;
 
-void destroy_coord_system(CoordSystem *coord);
+struct _GraphFunc {
+    gdouble (*func)(gdouble, gpointer);
+    gpointer data;
+};
+
+Point *point_alloc(gdouble x, gdouble y);
+
+Graph *graph_new(const gchar *style);
+void graph_add(Graph *gr, Point *p);
+void graph_free(Graph *gr);
+
+void graph_draw_func(GraphFunc *gf, GtkWidget *darea, CoordSystem *coord);
 
 #endif /* _GRAPH_H */

@@ -5,9 +5,11 @@
 #include "graph.h"
 
 GtkWidget *create_graph(GtkWidget *parent_box, gdouble width, gdouble height);
-void clear_graph(GtkWidget *graph);
 
-void draw_graph_coord_system(GtkWidget *graph);
-void draw_graph_line(GtkWidget *graph, Point p_begin, Point p_end, const gchar *style);
+void coord_system_draw(GtkWidget *graph, CoordSystem *coord);
+void graph_draw_line(GtkWidget *darea, CoordSystem *coord,
+                     gdouble x1, gdouble y1,
+                     gdouble x2, gdouble y2,
+                     const gchar *style_name);
 
 #endif /* _UI_GRAPH_H */

@@ -47,7 +47,7 @@ gint main(gint argc, gchar *argv[])
     ctime = waittime = 0;
 
     if (argc != 3) {
-        printf("Usage: zerfall NUMBER HALFTIME\n");
+        printf("Usage: rdecay NUMBER HALFTIME\n");
         exit(1);
     }
 

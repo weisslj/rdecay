@@ -1,0 +1,7 @@
+# List of source files containing translatable strings.
+
+src/input.c
+src/topwin.c
+src/status.c
+src/main.c
+src/sim.c

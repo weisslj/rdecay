@@ -1,7 +1,16 @@
 #include <gtk/gtk.h>
+#include <gsl/gsl_rng.h>
 
 #include "input.h"
 #include "sim.h"
+
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include "gettext.h"
+#define _(String) gettext (String)
+#define N_(String) gettext_noop (String)
 
 GtkWidget *create_input_fields(GtkWidget *parent_box)
 {
@@ -23,13 +32,13 @@ GtkWidget *create_input_fields(GtkWidget *parent_box)
     box = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(parent_box), box, FALSE, FALSE, 20);
 
-    number_label = gtk_label_new("Atome: ");
+    number_label = gtk_label_new(_("atoms: "));
     gtk_box_pack_start(GTK_BOX(box), number_label, FALSE, FALSE, 10);
 
     number_spin = gtk_spin_button_new(number_adj, 0.5, 0);
     gtk_box_pack_start(GTK_BOX(box), number_spin, FALSE, FALSE, 20);
 
-    time_label = gtk_label_new("Halbwertszeit: ");
+    time_label = gtk_label_new(_("half-life: "));
     gtk_box_pack_start(GTK_BOX(box), time_label, FALSE, FALSE, 10);
 
     time_spin = gtk_spin_button_new(time_adj, 0.5, 2);
@@ -47,26 +56,26 @@ GtkWidget *create_input_fields(GtkWidget *parent_box)
     return box;
 }
 
-GtkWidget *create_ctrl_buttons(GtkWidget *parent_box)
+GtkWidget *create_ctrl_buttons(GtkWidget *parent_box, gsl_rng *rand)
 {
     GtkWidget *top, *box, *bstart, *bstop, *bquit;
 
     box = gtk_hbox_new(FALSE, 20);
     gtk_box_pack_start(GTK_BOX(parent_box), box, TRUE, TRUE, 20);
 
-    bstart = gtk_button_new_with_label("Start");
+    bstart = gtk_button_new_with_label(_("start"));
     gtk_box_pack_start(GTK_BOX(box), bstart, TRUE, TRUE, 20);
 
-    bstop = gtk_button_new_with_label("Stop");
+    bstop = gtk_button_new_with_label(_("stop"));
     gtk_box_pack_start(GTK_BOX(box), bstop, TRUE, TRUE, 20);
 
-    bquit = gtk_button_new_with_label("Beenden");
+    bquit = gtk_button_new_with_label(_("quit"));
     gtk_box_pack_start(GTK_BOX(box), bquit, TRUE, TRUE, 20);
 
     g_signal_connect(G_OBJECT(bstart),
                      "clicked",
                      G_CALLBACK(sim_decay),
-                     NULL);
+                     rand);
 
     gtk_widget_set_sensitive(bstop, FALSE);
 

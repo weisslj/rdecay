@@ -4,7 +4,7 @@
 
 #define RGB (65535 / 255)
 
-GdkColor *create_color(GtkWidget *widget, gint red, gint green, gint blue)
+GdkColor *color_new(GtkWidget *widget, gint red, gint green, gint blue)
 {
     GdkColor *color;
 
@@ -19,4 +19,9 @@ GdkColor *create_color(GtkWidget *widget, gint red, gint green, gint blue)
     gdk_color_alloc(gtk_widget_get_colormap(widget), color);
 
     return color;
+}
+
+void color_free(GdkColor *color)
+{
+    gdk_color_free(color);
 }

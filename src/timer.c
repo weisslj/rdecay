@@ -64,7 +64,7 @@ gboolean timer_is_running(MyTimer *timer)
     return (timer->stopped) ? FALSE : TRUE;
 }
 
-void timer_destroy(MyTimer *timer)
+void timer_free(MyTimer *timer)
 {
     g_timer_destroy(timer->gtimer);
     g_free(timer);

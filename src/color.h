@@ -3,6 +3,7 @@
 
 #include <gtk/gtk.h>
 
-GdkColor *create_color(GtkWidget *widget, gint red, gint green, gint blue);
+GdkColor *color_new(GtkWidget *widget, gint red, gint green, gint blue);
+void color_free(GdkColor *color);
 
 #endif /* _COLOR_H */

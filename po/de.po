@@ -1,0 +1,86 @@
+# German translations for rdecay package
+# German messages for rdecay.
+# Copyright (C) 2003 Free Software Foundation, Inc.
+# This file is distributed under the same license as the rdecay package.
+#  <jargon@hurg.org>, 2003.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: rdecay 0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2003-12-16 18:32+0100\n"
+"PO-Revision-Date: 2003-12-09 01:37+0100\n"
+"Last-Translator:  <jargon@hurg.org>\n"
+"Language-Team: German <de@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: src/input.c:33
+msgid "atoms: "
+msgstr "Atome: "
+
+#: src/input.c:39
+msgid "half-life: "
+msgstr "Halbwertszeit: "
+
+#: src/input.c:64 src/sim.c:149
+msgid "start"
+msgstr "Start"
+
+#: src/input.c:67
+msgid "stop"
+msgstr "Stop"
+
+#: src/input.c:70
+msgid "quit"
+msgstr "Beenden"
+
+#: src/topwin.c:36
+msgid "simulation of radioactive decay"
+msgstr "Simulation des radioaktiven Zerfalls"
+
+#: src/status.c:41
+msgid "mother atoms: -"
+msgstr "Mutter-Atome: -"
+
+#: src/status.c:42
+msgid "doughter atoms: -"
+msgstr "Tochter-Atome: -"
+
+#: src/status.c:43
+msgid "grandchild atoms: -"
+msgstr "Enkel-Atome: -"
+
+#: src/status.c:44
+msgid "time: -"
+msgstr "Zeit: -"
+
+#: src/status.c:75
+#, c-format
+msgid "mother atoms: %d"
+msgstr "Mutter-Atome: %d"
+
+#: src/status.c:76
+#, c-format
+msgid "doughter atoms: %d"
+msgstr "Tochter-Atome: %d"
+
+#: src/status.c:77
+#, c-format
+msgid "grandchild atoms: %d"
+msgstr "Enkel-Atome: %d"
+
+#: src/status.c:87
+#, c-format
+msgid "time: %d"
+msgstr "Zeit; %d"
+
+#: src/sim.c:34 src/sim.c:79
+msgid "pause"
+msgstr "Pause"
+
+#: src/sim.c:42
+msgid "resume"
+msgstr "Weiter"

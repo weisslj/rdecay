@@ -8,13 +8,9 @@
 static gboolean init(GtkWidget *widget,
                                 GdkEventConfigure *event)
 {
-    CoordSystem *coord;
     GdkPixmap *pixmap;
     GdkColor *color1, *color2, *color3;
     GdkGC *style1, *style2, *style3;
-
-    coord = create_coord_system(widget->allocation.width,
-                                widget->allocation.height);
 
     pixmap = gdk_pixmap_new(widget->window,
                             widget->allocation.width,
@@ -32,21 +28,18 @@ static gboolean init(GtkWidget *widget,
     style2 = gdk_gc_new(widget->window);
     style3 = gdk_gc_new(widget->window);
 
-    color1 = create_color(widget, 255, 0, 0);
-    color2 = create_color(widget, 0, 255, 0);
-    color3 = create_color(widget, 0, 0, 255);
+    color1 = color_new(widget, 255, 0, 0);
+    color2 = color_new(widget, 0, 255, 0);
+    color3 = color_new(widget, 0, 0, 255);
 
     gdk_gc_set_foreground(style1, color1);
     gdk_gc_set_foreground(style2, color2);
     gdk_gc_set_foreground(style3, color3);
 
     g_object_set_data(G_OBJECT(widget), "pixmap", pixmap);
-    g_object_set_data(G_OBJECT(widget), "coord", coord);
     g_object_set_data(G_OBJECT(widget), "style1", style1);
     g_object_set_data(G_OBJECT(widget), "style2", style2);
     g_object_set_data(G_OBJECT(widget), "style3", style3);
-
-/*    draw_graph_coord_system(widget); */
 
     return TRUE;
 }
@@ -113,66 +106,77 @@ GtkWidget *create_graph(GtkWidget *parent_box, gdouble width, gdouble height)
     return graph;
 }
 
-void draw_graph_coord_system(GtkWidget *graph)
+void coord_system_draw(GtkWidget *graph, CoordSystem *coord)
 {
-    CoordSystem *coord;
     GdkPixmap *pixmap;
 
-    coord = g_object_get_data(G_OBJECT(graph), "coord");
     pixmap = g_object_get_data(G_OBJECT(graph), "pixmap");
 
     gdk_draw_line(pixmap,
                   graph->style->black_gc,
-                  coord->zero.x - coord->len_left,
-                  coord->zero.y,
-                  coord->zero.x + coord->len_right,
-                  coord->zero.y);
+                  coord->x_axis_begin,
+                  coord->zero_y,
+                  coord->x_axis_end,
+                  coord->zero_y);
 
     gdk_draw_line(pixmap,
                   graph->style->black_gc,
-                  coord->zero.x,
-                  coord->zero.y - coord->len_top,
-                  coord->zero.x,
-                  coord->zero.y + coord->len_bottom);
+                  coord->x_axis_end - 5,
+                  coord->zero_y - 5,
+                  coord->x_axis_end,
+                  coord->zero_y);
+
+    gdk_draw_line(pixmap,
+                  graph->style->black_gc,
+                  coord->x_axis_end - 5,
+                  coord->zero_y + 5,
+                  coord->x_axis_end,
+                  coord->zero_y);
+
+    gdk_draw_line(pixmap,
+                  graph->style->black_gc,
+                  coord->zero_x,
+                  coord->y_axis_begin,
+                  coord->zero_x,
+                  coord->y_axis_end);
+
+    gdk_draw_line(pixmap,
+                  graph->style->black_gc,
+                  coord->zero_x - 5,
+                  coord->y_axis_end + 5,
+                  coord->zero_x,
+                  coord->y_axis_end);
+
+    gdk_draw_line(pixmap,
+                  graph->style->black_gc,
+                  coord->zero_x + 5,
+                  coord->y_axis_end + 5,
+                  coord->zero_x,
+                  coord->y_axis_end);
 
     gtk_widget_queue_draw_area(graph,
-                               coord->zero.x - coord->len_left,
-                               coord->zero.y - coord->len_top,
-                               coord->zero.x + coord->len_right,
-                               coord->zero.y + coord->len_bottom);
+                               coord->x_axis_begin,
+                               coord->y_axis_begin,
+                               coord->x_axis_end,
+                               coord->y_axis_end);
 }
 
-void draw_graph_line(GtkWidget *graph, Point p_begin, Point p_end, const gchar *style)
+void graph_draw_line(GtkWidget *graph, CoordSystem *coord,
+                     gdouble x1, gdouble y1,
+                     gdouble x2, gdouble y2,
+                     const gchar *style_name)
 {
-    CoordSystem *coord;
     GdkPixmap *pixmap;
     GdkGC *style;
 
-    coord = g_object_get_data(G_OBJECT(graph), "coord");
     pixmap = g_object_get_data(G_OBJECT(graph), "pixmap");
-    style = g_object_get_data(G_OBJECT(graph), style);
+    style = g_object_get_data(G_OBJECT(graph), style_name);
 
-    gdk_draw_line(pixmap, style, p_begin.x, p_begin.y, p_end.x, p_end.y);
+    coord_get_real(&x1, &y1, coord);
+    coord_get_real(&x2, &y2, coord);
+
+    gdk_draw_line(pixmap, style, x1, y1, x2, y2);
     gtk_widget_queue_draw_area(graph,
-                               p_begin.x, p_begin.y,
-                               p_end.x, p_end.y);
-}
-    
-void clear_graph(GtkWidget *graph)
-{
-    GdkPixmap *pixmap;
-
-    pixmap = g_object_get_data(G_OBJECT(graph), "pixmap");
-
-    gdk_draw_rectangle(pixmap,
-                       graph->style->white_gc,
-                       TRUE,
-                       0, 0,
-                       graph->allocation.width,
-                       graph->allocation.height);
-
-    gtk_widget_queue_draw_area(graph,
-                               0, 0,
-                               graph->allocation.width,
-                               graph->allocation.height);
+                               x1, y1,
+                               x2, y2);
 }

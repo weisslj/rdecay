@@ -1,33 +1,40 @@
-#ifndef _GRAPH_H
-#define _GRAPH_H
+#ifndef _COORD_H
+#define _COORD_H
 
 #include <glib.h>
-
-typedef struct _Point Point;
-
-struct _Point {
-    gint x;
-    gint y;
-};
-
 
 typedef struct _CoordSystem CoordSystem;
 
 struct _CoordSystem {
-    Point zero;
+    gdouble min_x;
+    gdouble max_x;
 
-    gint unit;
+    gdouble min_y;
+    gdouble max_y;
 
-    gint len_top;
-    gint len_left;
-    gint len_bottom;
-    gint len_right;
+    gdouble step_x;
+    gdouble step_y;
+
+    gdouble x_fact;
+    gdouble y_fact;
+
+    gint zero_x;
+    gint zero_y;
+
+    gint x_axis_begin;
+    gint x_axis_end;
+    gint y_axis_begin;
+    gint y_axis_end;
 };
 
-CoordSystem *create_coord_system(gint field_width, gint field_height);
+CoordSystem *coord_system_new(gint field_width, gint field_height,
+                              gdouble min_x, gdouble max_x,
+                              gdouble min_y, gdouble max_y);
 
-Point coord_get_real_point(Point coord_point, CoordSystem *coord);
+void coord_system_free(CoordSystem *coord);
 
-void destroy_coord_system(CoordSystem *coord);
+void coord_get_real(gdouble *x, gdouble *y, CoordSystem *coord);
+gdouble coord_real_x(gdouble x, CoordSystem *coord);
+gdouble coord_real_y(gdouble y, CoordSystem *coord);
 
-#endif /* _GRAPH_H */
+#endif /* _COORD_H */

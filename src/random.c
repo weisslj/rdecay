@@ -12,7 +12,7 @@
 #include <time.h>
 #include "random.h"
 
-unsigned long int get_random_seed(void)
+unsigned long int random_get_seed(void)
 {
     unsigned long int seed;
 

@@ -3,10 +3,9 @@
 
 #include <gtk/gtk.h>
 
-#include "atoms.h"
+#include "afield.h"
 
 GtkWidget *create_atom_field(GtkWidget *parent_box, gdouble width, gdouble height);
-void clear_atom_field(GtkWidget *afield);
-void draw_atom(GtkWidget *afield, AtomList *atom, gdouble wide);
+void draw_atom(GtkWidget *darea, AtomCoord *coord, gint wide);
 
 #endif /* _UI_AFIELD_H */
