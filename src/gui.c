@@ -53,7 +53,8 @@ static GtkWidget *create_time_menu(void);
 
 static GtkWidget *create_template_menu(void);
 static void set_template(GtkWidget *menu, GtkWidget *top);
-static void add_template(GtkWidget *menu, gint n, const gchar *text, ...);
+static void add_template(GtkListStore *store, gint n,
+                         const gchar *text, ...);
 
 static gchar *format_log_scale(GtkScale *scale, gdouble value);
 static gboolean reset_scale(GtkWidget *scale, GdkEventButton *event);
@@ -200,6 +201,25 @@ gboolean gui_delete(void)
 gdouble scale_get_speed(GtkWidget *scale_speed)
 {
     return pow(10.0, gtk_range_get_value(GTK_RANGE(scale_speed)));
+}
+
+/* gibt den passenden Umrechnungsfaktor zurück */
+gulong combo_get_unit(gint active)
+{
+    switch (active) {
+    case N_SECOND:
+        return 1L;
+    case N_MINUTE:
+        return 60L;
+    case N_HOUR:
+        return 3600L;
+    case N_DAY:
+        return 86400L;
+    case N_YEAR:
+        return 31536000L;
+    default:
+        return 0L;
+    }
 }
 
 /* erstellt die beiden Zeichenbereiche */
@@ -890,51 +910,26 @@ static gboolean reset_scale(GtkWidget *scale, GdkEventButton *event)
 
 static GtkWidget *create_time_menu(void)
 {
-    GtkWidget *menu, *option_menu, *menu_item[5];
+    GtkWidget *combo_box;
 
-    menu = gtk_menu_new();
+    combo_box = gtk_combo_box_new_text();
 
-    menu_item[N_SECOND] = gtk_menu_item_new_with_label("s");
-    menu_item[N_MINUTE] = gtk_menu_item_new_with_label("min");
-    menu_item[N_HOUR] = gtk_menu_item_new_with_label("h");
-    menu_item[N_DAY] = gtk_menu_item_new_with_label("d");
-    menu_item[N_YEAR] = gtk_menu_item_new_with_label("a");
+    gtk_combo_box_insert_text(GTK_COMBO_BOX(combo_box), N_SECOND, "s");
+    gtk_combo_box_insert_text(GTK_COMBO_BOX(combo_box), N_MINUTE, "min");
+    gtk_combo_box_insert_text(GTK_COMBO_BOX(combo_box), N_HOUR, "h");
+    gtk_combo_box_insert_text(GTK_COMBO_BOX(combo_box), N_DAY, "d");
+    gtk_combo_box_insert_text(GTK_COMBO_BOX(combo_box), N_YEAR, "a");
 
-    g_object_set_data(G_OBJECT(menu_item[N_SECOND]), "factor",
-                      GINT_TO_POINTER(1));
-    g_object_set_data(G_OBJECT(menu_item[N_MINUTE]), "factor",
-                      GINT_TO_POINTER(60));
-    g_object_set_data(G_OBJECT(menu_item[N_HOUR]), "factor",
-                      GINT_TO_POINTER(3600));
-    g_object_set_data(G_OBJECT(menu_item[N_DAY]), "factor",
-                      GINT_TO_POINTER(86400));
-    g_object_set_data(G_OBJECT(menu_item[N_YEAR]), "factor",
-                      GINT_TO_POINTER(31536000));
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo_box), 0);
 
-    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item[N_SECOND]);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item[N_MINUTE]);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item[N_HOUR]);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item[N_DAY]);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item[N_YEAR]);
-
-    gtk_widget_show(menu_item[N_SECOND]);
-    gtk_widget_show(menu_item[N_MINUTE]);
-    gtk_widget_show(menu_item[N_HOUR]);
-    gtk_widget_show(menu_item[N_DAY]);
-    gtk_widget_show(menu_item[N_YEAR]);
-
-    option_menu = gtk_option_menu_new();
-    gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
-
-    gtk_widget_show(menu);
-
-    return option_menu;
+    return combo_box;
 }
 
-static void add_template(GtkWidget *menu, gint n, const gchar *text, ...)
+static void add_template(GtkListStore *store, gint n,
+                         const gchar *text, ...)
 {
+    GtkTreeIter iter;
     va_list ap;
-    GtkWidget *menu_item;
     gdouble *htime;
     gint i, *htime_unit;
 
@@ -948,53 +943,59 @@ static void add_template(GtkWidget *menu, gint n, const gchar *text, ...)
     }
     va_end(ap);
 
-    menu_item = gtk_menu_item_new_with_label(text);
-
-    g_object_set_data(G_OBJECT(menu_item), "states", GINT_TO_POINTER(n+1));
-    g_object_set_data(G_OBJECT(menu_item), "htime", htime);
-    g_object_set_data(G_OBJECT(menu_item), "htime_unit", htime_unit);
-
-    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
-    gtk_widget_show(menu_item);
+    gtk_list_store_append(store, &iter);
+    gtk_list_store_set(store, &iter, 0, text, 1, n + 1,
+                                     2, (gpointer) htime,
+                                     3, (gpointer) htime_unit,
+                                     -1);
 }
 
 static GtkWidget *create_template_menu(void)
 {
-    GtkWidget *menu, *option_menu;
+    GtkWidget *combo_box;
+    GtkListStore *store;
+    GtkCellRenderer *renderer;
     gint i;
 
-    menu = gtk_menu_new();
+    store = gtk_list_store_new(4, G_TYPE_STRING,
+                                  G_TYPE_INT,
+                                  G_TYPE_POINTER,
+                                  G_TYPE_POINTER);
+
     i = 0;
 
-    add_template(menu, 2, "Th-232 -> Ra-228 -> Pb-208",
+    add_template(store, 2, "Th-232 -> Ra-228 -> Pb-208",
                  1.4e10, N_YEAR, 5.8, N_YEAR);
     i++;
 
-    add_template(menu, 4, "Am-241 -> Np-237 -> U-233 -> Th-229 -> Bi-209",
+    add_template(store, 4, "Am-241 -> Np-237 -> U-233 -> Th-229 -> Bi-209",
                  4.3e2, N_YEAR, 2.1e6, N_YEAR, 1.6e5, N_YEAR, 7.3e3, N_YEAR);
     i++;
 
-    add_template(menu, 3, "Th-230 -> Ra-226 -> Pb-210 -> Pb-206",
+    add_template(store, 3, "Th-230 -> Ra-226 -> Pb-210 -> Pb-206",
                  7.5e4, N_YEAR, 1.6e3, N_YEAR, 22.0, N_YEAR);
     i++;
 
-    add_template(menu, 3, "U-235 -> Pa-231 -> Ac-227 -> Pb-207",
+    add_template(store, 3, "U-235 -> Pa-231 -> Ac-227 -> Pb-207",
                  7.0e8, N_YEAR, 3.3e4, N_YEAR, 22.0, N_YEAR);
     i++;
 
-    option_menu = gtk_option_menu_new();
-    gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
-    gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu),
-                                i-1);
+    combo_box = gtk_combo_box_new_with_model(GTK_TREE_MODEL(store));
 
-    gtk_widget_show(menu);
+    renderer = gtk_cell_renderer_text_new();
+    gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(combo_box), renderer, TRUE);
+    gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(combo_box), renderer,
+                                   "text", 0, NULL);
 
-    return option_menu;
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo_box), i - 1);
+
+    return combo_box;
 }
 
-static void set_template(GtkWidget *menu, GtkWidget *top)
+static void set_template(GtkWidget *combo_box, GtkWidget *top)
 {
-    GtkWidget **spin_htime, **menu_htime, *spin_states, *template;
+    GtkWidget **spin_htime, **menu_htime, *spin_states;
+    GtkTreeIter iter;
     gdouble *htime;
     gint i, *htime_unit, states;
 
@@ -1002,13 +1003,10 @@ static void set_template(GtkWidget *menu, GtkWidget *top)
     spin_htime = g_object_get_data(G_OBJECT(top), "spin_htime");
     menu_htime = g_object_get_data(G_OBJECT(top), "menu_htime");
 
-    template = gtk_menu_get_active(
-               GTK_MENU(gtk_option_menu_get_menu(GTK_OPTION_MENU(menu))));
+    gtk_combo_box_get_active_iter(GTK_COMBO_BOX(combo_box), &iter);
 
-    states = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(template),
-                                               "states"));
-    htime = g_object_get_data(G_OBJECT(template), "htime");
-    htime_unit = g_object_get_data(G_OBJECT(template), "htime_unit");
+    gtk_tree_model_get(gtk_combo_box_get_model(GTK_COMBO_BOX(combo_box)),
+                       &iter, 1, &states, 2, &htime, 3, &htime_unit, -1);
 
     states = MIN(states, ATOM_STATES);
 
@@ -1016,7 +1014,7 @@ static void set_template(GtkWidget *menu, GtkWidget *top)
     for (i = 0; i < (states - 1); i++) {
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_htime[i]),
                                   htime[i]);
-        gtk_option_menu_set_history(GTK_OPTION_MENU(menu_htime[i]),
+        gtk_combo_box_set_active(GTK_COMBO_BOX(menu_htime[i]),
                                     htime_unit[i]);
     }
 }

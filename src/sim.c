@@ -748,9 +748,7 @@ static void get_sim_input(GtkWidget *top, SimData *data)
         data->atoms[i] = 0;
     for (i = 0; i < (data->states - 1); i++)
         data->thalf[i] = gtk_spin_button_get_value(
-                         GTK_SPIN_BUTTON(spin_htime[i])) *
-                         GPOINTER_TO_INT(g_object_get_data(G_OBJECT(
-                         gtk_menu_get_active(GTK_MENU(
-                         gtk_option_menu_get_menu(GTK_OPTION_MENU(
-                         menu_htime[i]))))), "factor"));
+                         GTK_SPIN_BUTTON(spin_htime[i])) * (gdouble)
+                         combo_get_unit(gtk_combo_box_get_active(
+                                        GTK_COMBO_BOX(menu_htime[i])));
 }

@@ -1,79 +1,79 @@
 # german rdecay po-file
 # Copyright (C) 2004 Johannes Weißl
 # This file is distributed under the same license as the rdecay package.
-# Johannes Weißl <johannes.weissl@gmx.de>, 2004.
+# Johannes Weißl <jargon@molb.org>, 2004.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: rdecay 1.01\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-03-16 18:14+0100\n"
+"POT-Creation-Date: 2004-03-26 17:37+0100\n"
 "PO-Revision-Date: 2004-02-13 14:50+0100\n"
-"Last-Translator: Johannes Weißl <johannes.weissl@gmx.de>\n"
+"Last-Translator: Johannes Weißl <jargon@molb.org>\n"
 "Language-Team: de <de@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/gui.c:90
+#: src/gui.c:91
 msgid "Simulation of radioactive decay"
 msgstr "Simulation des radioaktiven Zerfalls"
 
-#: src/gui.c:293
+#: src/gui.c:313
 msgid "Time: "
 msgstr "Zeit: "
 
-#: src/gui.c:365
+#: src/gui.c:385
 msgid "Generations: "
 msgstr "Generationen: "
 
-#: src/gui.c:379
+#: src/gui.c:399
 msgid "Atoms: "
 msgstr "Atome: "
 
-#: src/gui.c:390
+#: src/gui.c:410
 #, c-format
 msgid "Half-life %s"
 msgstr "Halbwertszeit %s"
 
-#: src/gui.c:478
+#: src/gui.c:498
 msgid "Number"
 msgstr "Anzahl"
 
-#: src/gui.c:483
+#: src/gui.c:503
 msgid "Activity"
 msgstr "Aktivität"
 
-#: src/gui.c:502
+#: src/gui.c:522
 msgid "real"
 msgstr "real"
 
-#: src/gui.c:506
+#: src/gui.c:526
 msgid "stat."
 msgstr "stat."
 
-#: src/gui.c:510
+#: src/gui.c:530
 msgid "step"
 msgstr "stuf."
 
-#: src/gui.c:528
+#: src/gui.c:548
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: src/gui.c:573 src/sim.c:591
+#: src/gui.c:593 src/sim.c:591
 msgid "Start"
 msgstr "Start"
 
-#: src/gui.c:576
+#: src/gui.c:596
 msgid "Stop"
 msgstr "Stop"
 
-#: src/gui.c:579
+#: src/gui.c:599
 msgid "Quit"
 msgstr "Beenden"
 
-#: src/gui.c:582
+#: src/gui.c:602
 msgid "Speed"
 msgstr "Geschwindigkeit"
 

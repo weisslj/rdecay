@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-03-16 18:14+0100\n"
+"POT-Creation-Date: 2004-03-26 17:37+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,65 +16,65 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/gui.c:90
+#: src/gui.c:91
 msgid "Simulation of radioactive decay"
 msgstr ""
 
-#: src/gui.c:293
+#: src/gui.c:313
 msgid "Time: "
 msgstr ""
 
-#: src/gui.c:365
+#: src/gui.c:385
 msgid "Generations: "
 msgstr ""
 
-#: src/gui.c:379
+#: src/gui.c:399
 msgid "Atoms: "
 msgstr ""
 
-#: src/gui.c:390
+#: src/gui.c:410
 #, c-format
 msgid "Half-life %s"
 msgstr ""
 
-#: src/gui.c:478
+#: src/gui.c:498
 msgid "Number"
 msgstr ""
 
-#: src/gui.c:483
+#: src/gui.c:503
 msgid "Activity"
 msgstr ""
 
-#: src/gui.c:502
+#: src/gui.c:522
 msgid "real"
 msgstr ""
 
-#: src/gui.c:506
+#: src/gui.c:526
 msgid "stat."
 msgstr ""
 
-#: src/gui.c:510
+#: src/gui.c:530
 msgid "step"
 msgstr ""
 
-#: src/gui.c:528
+#: src/gui.c:548
 #, c-format
 msgid "%s"
 msgstr ""
 
-#: src/gui.c:573 src/sim.c:591
+#: src/gui.c:593 src/sim.c:591
 msgid "Start"
 msgstr ""
 
-#: src/gui.c:576
+#: src/gui.c:596
 msgid "Stop"
 msgstr ""
 
-#: src/gui.c:579
+#: src/gui.c:599
 msgid "Quit"
 msgstr ""
 
-#: src/gui.c:582
+#: src/gui.c:602
 msgid "Speed"
 msgstr ""
 

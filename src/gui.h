@@ -29,5 +29,6 @@ GtkWidget *gui_create(void);
 void gui_destroy(void);
 gboolean gui_delete(void);
 gdouble scale_get_speed(GtkWidget *scale_speed);
+gulong combo_get_unit(gint active);
 
 #endif /* _GUI_H */

@@ -1,7 +1,6 @@
 bin_PROGRAMS = rdecay
 rdecay_SOURCES = \
     main.c        \
-    gettext.h     \
     arg.c         arg.h       \
     opt.c         opt.h       \
     atoms.c       atoms.h     \
@@ -21,4 +20,5 @@ rdecay_SOURCES = \
 
 localedir = $(datadir)/locale
 AM_CFLAGS = -DLOCALEDIR=\"$(localedir)\" @WARN_FLAGS@ @GTK_CFLAGS@ @GSL_CFLAGS@
+INCLUDES = -I../lib
 LIBS = @LIBINTL@ @LIBS@ @GTK_LIBS@ @GSL_LIBS@

@@ -34,10 +34,10 @@ gboolean afield_resize(GtkWidget *darea,
 {
     IGNORE(event);
 
-    if (!af->uniform) {
+    if (!af->uniform)
         afield_arrange(af, darea);
+    if (!af->uniform)
         afield_draw(darea, af);
-    }
 
     return FALSE;
 }

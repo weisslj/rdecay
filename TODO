@@ -1,4 +1,4 @@
-* optimieren
-* richtiger höchster Y-Wert für Aktivität
-* besserer stufiger Graph
-* Selbstbestimmung der Skalierung
+* calculate the activity start-value
+* improve step-graph
+* the user should be able to chose the graph scaling
+* no colored check-boxes

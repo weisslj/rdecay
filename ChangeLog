@@ -1,4 +1,8 @@
-2004-03-04  Johannes Weißl  <johannes.weissl@gmx.de>
+2004-04-05  Johannes Weißl  <jargon@molb.org>
+
+	* gui.c: use of GtkComboBox instead of GtkOptionMenu
+
+2004-03-04  Johannes Weißl  <jargon@molb.org>
 
 	* sim.c: when the window gets closed while the simulation is
 	  running, the sim_decay() function returns before destroying
@@ -14,7 +18,7 @@
 	* gui.c: the program doesn't crash anymore, if you select a
 	  template with more than ATOM_STATES generations
 
-2004-02-02  Johannes Weißl  <johannes.weissl@gmx.de>
+2004-02-02  Johannes Weißl  <jargon@molb.org>
 
 	* initial release
 

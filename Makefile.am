@@ -1,4 +1,4 @@
-SUBDIRS = intl m4 src doc po
+SUBDIRS = intl m4 lib src doc po
 
 ACLOCAL_AMFLAGS = -I m4
 

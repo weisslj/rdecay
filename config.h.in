@@ -96,9 +96,6 @@
 /* Define to 1 if you have the <nl_types.h> header file. */
 #undef HAVE_NL_TYPES_H
 
-/* Define to 1 if you have the `pow' function. */
-#undef HAVE_POW
-
 /* Define to 1 if you have the `putenv' function. */
 #undef HAVE_PUTENV
 
@@ -107,9 +104,6 @@
 
 /* Define to 1 if you have the `setlocale' function. */
 #undef HAVE_SETLOCALE
-
-/* Define to 1 if you have the `sqrt' function. */
-#undef HAVE_SQRT
 
 /* Define to 1 if you have the <stddef.h> header file. */
 #undef HAVE_STDDEF_H
