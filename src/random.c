@@ -20,6 +20,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "random.h"
+
+#include <time.h>
+
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -30,9 +34,6 @@
 #include <windows.h>
 #include <wincrypt.h>
 #endif
-
-#include <time.h>
-#include "random.h"
 
 /* Gibt eine mehr oder weniger zufällige Zahl zurück:
    Je nach Konfiguration beim Kompilieren entweder vom einem virtuellen

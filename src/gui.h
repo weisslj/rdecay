@@ -1,5 +1,5 @@
 /* 
- * darea.h - Zeichenbereiche
+ * gui.h - die Benutzeroberfläche
  *
  * Copyright 2004 Johannes Weißl
  *
@@ -20,19 +20,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _DAREA_H
-#define _DAREA_H
+#ifndef _GUI_H
+#define _GUI_H
 
 #include <gtk/gtk.h>
 
-#define N_DAREAS 2
+GtkWidget *gui_create(void);
+gdouble scale_get_speed(GtkWidget *scale_speed);
 
-GtkWidget *darea_new(void);
-void darea_clear(GtkWidget *darea);
-void darea_update(GtkWidget *darea);
-
-void darea_init(GtkWidget *darea);
-gboolean darea_resize(GtkWidget *darea);
-gboolean darea_redraw(GtkWidget *darea, GdkEventExpose *event);
-
-#endif /* _DAREA_H */
+#endif /* _GUI_H */

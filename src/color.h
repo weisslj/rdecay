@@ -25,9 +25,7 @@
 
 #include <gtk/gtk.h>
 
-#define N_COLORS 5
-#define N_STYLES 5
-
-GdkColor color_new(gint red, gint green, gint blue);
+GdkColor color_new(GdkColormap *colormap, gint red, gint green, gint blue);
+GdkColor *color_alloc(GdkColormap *colormap, gint red, gint green, gint blue);
 
 #endif /* _COLOR_H */

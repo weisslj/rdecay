@@ -2,18 +2,20 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT(rdecay, 0.0, jargon@hurg.org)
+AC_INIT(rdecay, 1.0, johannes.weissl@gmx.de)
 AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_HEADER([config.h])
-AM_INIT_AUTOMAKE(rdecay, 0.0)
+AM_INIT_AUTOMAKE(rdecay, 1.0)
 
 AC_CANONICAL_HOST
 case $host_os in
     *linux*)
         platform="linux"
+        AC_DEFINE_UNQUOTED(OS_LINUX, 1, [OS is Linux.])
         ;;
     *msdos* | *go32* | *mingw* | *cygwin* | *windows*)
         platform="windows"
+        AC_DEFINE_UNQUOTED(OS_WINDOWS, 1, [OS is Windows.])
         ;;
     *)
         platform=""
@@ -23,7 +25,7 @@ esac
 # Checks for programs.
 AC_PROG_CC
 if test $GCC = yes ; then
-    if test $host_os = "windows" ; then
+    if test $platform = "windows" ; then
         WARN_FLAGS=""
     else
         WARN_FLAGS="-ansi -pedantic -W -Wall"
@@ -44,20 +46,22 @@ fi
 
 PKG_CHECK_MODULES(GSL, gsl)
 
-#SDL_CFLAGS=`sdl-config --cflags`
-#SDL_LIBS=`sdl-config --libs`
-#AC_SUBST(SDL_CFLAGS)
-#AC_SUBST(SDL_LIBS)
-
 # Checks for header files.
 AC_HEADER_STDC
+AC_CHECK_HEADERS([stdlib.h string.h sys/time.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 
 # Checks for library functions.
+AC_CHECK_FUNCS([pow sqrt])
 
-rnd_device=yes
+if test $platform = "windows" ; then
+    rnd_device=no
+else
+    rnd_device=yes
+fi
+
 AC_ARG_ENABLE(rnd-device,
         AC_HELP_STRING([--enable-rnd-device=DEVICE], [path to random device (default is /dev/urandom)]),
         [rnd_device=$enableval])
@@ -79,7 +83,12 @@ else
     AC_MSG_NOTICE([Random device disabled])
 fi
 
-crypto_api=yes
+if test $platform = "windows" ; then
+    crypto_api=yes
+else
+    crypto_api=no
+fi
+
 AC_ARG_ENABLE(cryptoapi,
         AC_HELP_STRING([--disable-cryptoapi], [don't use the Microsoft Crypto API (default is yes)]),
         [crypto_api=$enableval])

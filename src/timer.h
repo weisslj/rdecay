@@ -25,24 +25,35 @@
 
 #include <glib.h>
 
+/* Mikrosekunden pro Sekunde */
+#define USEC_PER_SEC 1000000
+
 typedef struct _MyTimer MyTimer;
 
-struct _MyTimer {
-    GTimer *gtimer;
-    gdouble stopped;
-    gdouble tbuf;
+struct _MyTimer
+{
+    gdouble start;
+    gdouble stop;
+    gdouble delay;
+    gdouble diff;
+
+    gdouble speed;
+    gdouble speed_offset;
+    gdouble speed_diff;
+    gdouble speed_set;
+    gdouble speed_set_changed;
+
+    gboolean active;
 };
 
 
-MyTimer *timer_new(void);
-void timer_free(MyTimer *timer);
-
-gdouble timer_elapsed(MyTimer *timer);
-
+MyTimer* timer_new(gdouble speed);
+void timer_destroy(MyTimer *timer);
 void timer_start(MyTimer *timer);
 void timer_stop(MyTimer *timer);
 void timer_reset(MyTimer *timer);
-
+gdouble timer_elapsed(MyTimer *timer);
 gboolean timer_is_running(MyTimer *timer);
+void timer_set_speed(MyTimer *timer, gdouble speed);
 
 #endif /* _TIMER_H */

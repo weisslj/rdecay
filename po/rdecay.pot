@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2003-12-16 18:32+0100\n"
+"POT-Creation-Date: 2004-01-28 05:12+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,70 +16,83 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/input.c:33
-msgid "atoms: "
-msgstr ""
-
-#: src/input.c:39
-msgid "half-life: "
-msgstr ""
-
-#: src/input.c:64 src/sim.c:149
-msgid "start"
-msgstr ""
-
-#: src/input.c:67
-msgid "stop"
-msgstr ""
-
-#: src/input.c:70
-msgid "quit"
-msgstr ""
-
-#: src/topwin.c:36
+#: src/gui.c:85
 msgid "simulation of radioactive decay"
 msgstr ""
 
-#: src/status.c:41
-msgid "mother atoms: -"
+#: src/gui.c:257
+msgid "time: "
 msgstr ""
 
-#: src/status.c:42
-msgid "doughter atoms: -"
+#: src/gui.c:354
+msgid "states: "
 msgstr ""
 
-#: src/status.c:43
-msgid "grandchild atoms: -"
+#: src/gui.c:369
+msgid "atoms: "
 msgstr ""
 
-#: src/status.c:44
-msgid "time: -"
+#: src/gui.c:378
+msgid "half-life mother: "
 msgstr ""
 
-#: src/status.c:75
+#: src/gui.c:391
+msgid "half-life daughter: "
+msgstr ""
+
+#: src/gui.c:477
+msgid "number"
+msgstr ""
+
+#: src/gui.c:481
+msgid "activity"
+msgstr ""
+
+#: src/gui.c:499
+msgid "real"
+msgstr ""
+
+#: src/gui.c:503
+msgid "stat"
+msgstr ""
+
+#: src/gui.c:507
+msgid "step"
+msgstr ""
+
+#: src/gui.c:524 src/gui.c:542 src/gui.c:560
 #, c-format
-msgid "mother atoms: %d"
+msgid "%s atoms"
 msgstr ""
 
-#: src/status.c:76
-#, c-format
-msgid "doughter atoms: %d"
+#: src/gui.c:603 src/sim.c:411
+msgid "start"
 msgstr ""
 
-#: src/status.c:77
-#, c-format
-msgid "grandchild atoms: %d"
+#: src/gui.c:606
+msgid "stop"
 msgstr ""
 
-#: src/status.c:87
-#, c-format
-msgid "time: %d"
+#: src/gui.c:609
+msgid "quit"
 msgstr ""
 
-#: src/sim.c:34 src/sim.c:79
+#: src/sim.c:297 src/sim.c:433
 msgid "pause"
 msgstr ""
 
-#: src/sim.c:42
+#: src/sim.c:442
 msgid "resume"
+msgstr ""
+
+#: src/atoms.c:15
+msgid "mother"
+msgstr ""
+
+#: src/atoms.c:16
+msgid "daughter"
+msgstr ""
+
+#: src/atoms.c:17
+msgid "grandchild"
 msgstr ""

@@ -20,26 +20,42 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <gtk/gtk.h>
-
 #include "ui_graph.h"
 #include "graph.h"
+#include "darea.h"
 #include "coord.h"
 #include "util.h"
 
-/* passt das Koordinatensystem und die Graphen an eine
-   veränderte Größe an */
-gboolean graph_resize(GtkWidget *darea, GdkEventConfigure *event, CoordSystem *coord)
+#include <gtk/gtk.h>
+#include <math.h>
+
+#define CHECK_BORDER(d, max, min, fact, darea) \
+        if (d > max) { \
+            max += dmax(1 / fact, d - max); \
+            graph_rebuild(darea); \
+        } else if (d < min) { \
+            min -= dmax(1 / fact, min - d); \
+            graph_rebuild(darea); \
+        }
+
+/* baut den Graphen neu zusammen */
+gboolean graph_rebuild(GtkWidget *darea)
 {
+    CoordSystem *coord;
     GList *graph;
 
-    IGNORE(event);
+    /* holt das Koordinatensystem vom Zeichenbereich */
+    coord = g_object_get_data(G_OBJECT(darea), "coord");
+    if (coord == NULL)
+        return FALSE;
 
     /* passt das Koordinatensystem an */
-    coord_system_adjust(coord,
-                        darea->allocation.width, darea->allocation.height,
+    coord_system_adjust(coord, darea,
                         coord->min_x, coord->max_x,
                         coord->min_y, coord->max_y);
+
+    /* löscht den Zeichenbereich */
+    darea_clear(darea);
 
     /* zeichnet das Koordinatensystem */
     coord_system_draw(darea, coord);
@@ -49,44 +65,119 @@ gboolean graph_resize(GtkWidget *darea, GdkEventConfigure *event, CoordSystem *c
 
     /* passt nach einander jeden Graphen an */
     while (graph != NULL) {
-        graph_draw(graph->data, darea, coord);
+        if (((Graph *) graph->data)->active)
+            graph_draw(graph->data, darea, coord);
         graph = graph->next;
     }
 
     return FALSE;
 }
 
+/* zeichnet den Graphen neu */
+gboolean graph_redraw(GtkWidget *darea)
+{
+    CoordSystem *coord;
+    GList *graph;
+
+    /* holt das Koordinatensystem vom Zeichenbereich */
+    coord = g_object_get_data(G_OBJECT(darea), "coord");
+    if (coord == NULL)
+        return FALSE;
+
+    /* löscht den Zeichenbereich */
+    darea_clear(darea);
+
+    /* zeichnet das Koordinatensystem */
+    coord_system_draw(darea, coord);
+
+    /* springt zum ersten Graphen */
+    graph = g_list_first(coord->graphs);
+
+    /* zeichnet die Graphen */
+    while (graph != NULL) {
+        if (((Graph *) graph->data)->active)
+            graph_draw(graph->data, darea, coord);
+        graph = graph->next;
+    }
+
+    return FALSE;
+}
+
+/* zeichnet die Graphen weiter */
+void graph_update(GtkWidget *darea)
+{
+    CoordSystem *coord;
+    GList *graph;
+    Graph *gr;
+
+    /* holt das Koordinatensystem vom Zeichenbereich */
+    coord = g_object_get_data(G_OBJECT(darea), "coord");
+    if (coord == NULL)
+        return;
+
+    /* springt zum ersten Graphen */
+    graph = g_list_first(coord->graphs);
+
+    /* aktualisiert die aktivierten Graphen */
+    while (graph != NULL) {
+        gr = (Graph *) graph->data;
+        if (gr->active) {
+            gr->points = g_list_last(gr->points);
+            graph_draw_line(darea, coord,
+                            ((Point *) gr->points->prev->data)->x,
+                            ((Point *) gr->points->prev->data)->y,
+                            ((Point *) gr->points->data)->x,
+                            ((Point *) gr->points->data)->y,
+                            gr->style);
+        }
+        graph = graph->next;
+    }
+}
+
 /* zeichnet das Koordinatensystem auf einen Zeichenbereich */
 void coord_system_draw(GtkWidget *darea, CoordSystem *coord)
 {
+    GtkWidget *top;
+    gdouble d;
+    GdkGC *style_grid;
+    gint width, height, rd;
+    PangoLayout *layout;
     GdkPixmap *pixmap;
 
-    /* holt das pixmap vom Zeichenbereich */
+    top = gtk_widget_get_toplevel(darea);
     pixmap = g_object_get_data(G_OBJECT(darea), "pixmap");
+    layout = g_object_get_data(G_OBJECT(darea), "layout");
+    style_grid = g_object_get_data(G_OBJECT(top), "style_grid");
 
     /* zeichnet die X-Achse */
     gdk_draw_line(pixmap,
                   darea->style->black_gc,
                   coord->x_axis_begin,
                   coord->zero_y,
-                  coord->x_axis_end,
+                  coord->x_axis_end + ARROW_SHANK,
                   coord->zero_y);
 
     /* zeichnet den Pfeil am Ende der X-Achse */
     gdk_draw_line(pixmap,
                   darea->style->black_gc,
-                  coord->x_axis_end - 5,
-                  coord->zero_y - 5,
-                  coord->x_axis_end,
+                  coord->x_axis_end + ARROW_SHANK - ARROW_HEIGHT,
+                  coord->zero_y - (ARROW_WIDTH / 2),
+                  coord->x_axis_end + ARROW_SHANK,
                   coord->zero_y);
 
     gdk_draw_line(pixmap,
                   darea->style->black_gc,
-                  coord->x_axis_end - 5,
-                  coord->zero_y + 5,
-                  coord->x_axis_end,
+                  coord->x_axis_end + ARROW_SHANK - ARROW_HEIGHT,
+                  coord->zero_y + (ARROW_WIDTH / 2),
+                  coord->x_axis_end + ARROW_SHANK,
                   coord->zero_y);
 
+    /* zeichnet X-Achsen Benennung */
+    if (coord->x_unit[0] != '\0')
+        layout_printf(layout, "%s [%s]", coord->x_title, coord->x_unit);
+    else
+        layout_printf(layout, "%s", coord->x_title);
+    gdk_draw_layout(pixmap, darea->style->black_gc, coord->x_axis_end + ARROW_SHANK, coord->zero_y + 10, layout);
 
     /* zeichnet die Y-Ache */
     gdk_draw_line(pixmap,
@@ -94,38 +185,183 @@ void coord_system_draw(GtkWidget *darea, CoordSystem *coord)
                   coord->zero_x,
                   coord->y_axis_begin,
                   coord->zero_x,
-                  coord->y_axis_end);
+                  coord->y_axis_end - ARROW_SHANK);
 
     /* zeichnet den Pfeil am Ende der Y-Ache */
     gdk_draw_line(pixmap,
                   darea->style->black_gc,
-                  coord->zero_x - 5,
-                  coord->y_axis_end + 5,
+                  coord->zero_x - (ARROW_WIDTH / 2),
+                  coord->y_axis_end - ARROW_SHANK + ARROW_HEIGHT,
                   coord->zero_x,
-                  coord->y_axis_end);
+                  coord->y_axis_end - ARROW_SHANK);
 
     gdk_draw_line(pixmap,
                   darea->style->black_gc,
-                  coord->zero_x + 5,
-                  coord->y_axis_end + 5,
+                  coord->zero_x + (ARROW_WIDTH / 2),
+                  coord->y_axis_end - ARROW_SHANK + ARROW_HEIGHT,
                   coord->zero_x,
-                  coord->y_axis_end);
+                  coord->y_axis_end - ARROW_SHANK);
+
+    /* zeichnet Y-Achsen Benennung */
+    if (coord->y_unit[0] != '\0')
+        layout_printf(layout, "%s [%s]", coord->y_title, coord->y_unit);
+    else
+        layout_printf(layout, "%s", coord->y_title);
+    pango_layout_get_pixel_size(layout, &width, &height);
+    gdk_draw_layout(pixmap, darea->style->black_gc, coord->zero_x - width - 10, coord->y_axis_end - height - ARROW_SHANK, layout);
+
+    /* zeichnet Grid und Einheiten der X-Achse */
+    for (d = coord->min_x; d <= coord->max_x; d += coord->step_x) {
+        rd = coord_real_x(d, coord);
+        if (rd != coord->zero_x) {
+            gdk_draw_line(pixmap,
+                          style_grid,
+                          rd,
+                          coord_real_y(coord->min_y, coord),
+                          rd,
+                          coord_real_y(coord->max_y, coord));
+            gdk_draw_line(pixmap,
+                          darea->style->black_gc,
+                          rd,
+                          coord->zero_y - 2,
+                          rd,
+                          coord->zero_y + 2);
+        }
+        layout_printf(layout, "%g", d);
+        pango_layout_get_pixel_size(layout, &width, &height);
+        gdk_draw_layout(pixmap, darea->style->black_gc, rd - (width / 2.0), coord->zero_y + 10, layout);
+
+    }
+
+    /* zeichnet Grid und Einheiten der Y-Achse */
+    for (d = coord->min_y; d <= coord->max_y; d += coord->step_y) {
+        rd = coord_real_y(d, coord);
+        if (rd != coord->zero_y) {
+            gdk_draw_line(pixmap,
+                          style_grid,
+                          coord_real_x(coord->min_x, coord),
+                          rd,
+                          coord_real_x(coord->max_x, coord),
+                          rd);
+            gdk_draw_line(pixmap,
+                          darea->style->black_gc,
+                          coord->zero_x - 2,
+                          rd,
+                          coord->zero_x + 2,
+                          rd);
+        }
+        layout_printf(layout, "%g", d);
+        pango_layout_get_pixel_size(layout, &width, &height);
+        gdk_draw_layout(pixmap, darea->style->black_gc, coord->zero_x - 10 - width, rd - (height / 2.0), layout);
+    }
 
     /* gibt den Bereich zum Zeichnen auf dem Bildschirm frei */
-    gtk_widget_queue_draw_area(darea,
-                               coord->x_axis_begin,
-                               coord->y_axis_begin,
-                               coord->x_axis_end,
-                               coord->y_axis_end);
+    darea_update(darea);
 }
 
-/* zeichnet einen Graphen auf einen Zeichenbereich */
+/* schreibt die Position des Mauszeigers im
+   Koordinatensystem auf den Zeichenbereich */
+gboolean coord_draw_pos(GtkWidget *darea, GdkEventButton *event)
+{
+    GdkPixmap *pixmap;
+    CoordSystem *coord;
+    PangoLayout *layout;
+    gdouble x, y;
+    gint width, height, a, b, c, d;
+
+    /* holt das Koordinatensystem vom Zeichenbereich */
+    coord = g_object_get_data(G_OBJECT(darea), "coord");
+    if (coord == NULL)
+        return FALSE;
+
+    x = (event->x - coord->zero_x) / coord->x_fact;
+    y = (coord->zero_y - event->y) / coord->y_fact;
+
+    if (x < coord->min_x || x > coord->max_x || y < coord->min_y || y > coord->max_y)
+        return FALSE;
+
+    if (!coord->fract_x) {
+        x = ROUND(x, gint);
+    } else if (x >= 0.01)
+        x = round_digits(x, 2);
+    if (!coord->fract_y) {
+        y = ROUND(y, gint);
+    } else if (y >= 0.01)
+        y = round_digits(y, 2);
+
+    pixmap = g_object_get_data(G_OBJECT(darea), "pixmap");
+    layout = g_object_get_data(G_OBJECT(darea), "layout");
+
+    layout_printf(layout, "%g | %g", x, y);
+    pango_layout_get_pixel_size(layout, &width, &height);
+
+    a = coord->zero_x + 20;
+    b = coord->y_axis_end - ARROW_SHANK - height;
+    c = a + width;
+    d = b + height;
+
+    gdk_draw_rectangle(pixmap,
+                       darea->style->white_gc,
+                       TRUE,
+                       a, b, c, d);
+    gdk_draw_layout(pixmap, darea->style->black_gc, a, b, layout);
+    /* FIXME FIXME FIXME */
+    gtk_widget_queue_draw_area(darea, a, b, c, d);
+
+    return FALSE;
+}
+
+/* FIXME FIXME FIXME FIXME */
+void coord_system_store(GtkWidget *widget, CoordSystem *coord)
+{
+    GtkWidget *top, **darea;
+
+    if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)))
+        return;
+
+    top = gtk_widget_get_toplevel(widget);
+    darea = g_object_get_data(G_OBJECT(top), "darea");
+
+    g_object_set_data(G_OBJECT(darea[1]), "coord", coord);
+    graph_redraw(darea[1]);
+}
+    
+
+/* zeichnet einen Graphen auf einen Zeichenbereich FIXME FIXME FIXME */
 void graph_draw(Graph *gr, GtkWidget *darea, CoordSystem *coord)
 {
     GList *point;
+    gint i;
+    gdouble pixel, diff, x, y;
 
     /* Springt an den Anfang der Punktliste */
     point = g_list_first(gr->points);
+
+/*    i = 0;
+
+    pixel = 1 / coord->x_fact;
+
+    x = ((Point *) point->data)->x;
+    y = ((Point *) point->data)->y;
+
+    while (point != NULL && point->next != NULL) {
+        diff = fabs(x - ((Point *) point->data)->x);
+        if (diff >= pixel) {
+            graph_draw_line(darea, coord,
+                            x,
+                            y,
+                            ((Point *) point->data)->x,
+                            ((Point *) point->data)->y,
+                            gr->style);
+
+            x = ((Point *) point->data)->x;
+            y = ((Point *) point->data)->y;
+        }
+    
+        point = point->next;
+
+
+    } */
 
     /* zeichnet die Punkte */
     while (point != NULL && point->next != NULL) {
@@ -143,57 +379,27 @@ void graph_draw(Graph *gr, GtkWidget *darea, CoordSystem *coord)
 void graph_draw_line(GtkWidget *darea, CoordSystem *coord,
                      gdouble x1, gdouble y1,
                      gdouble x2, gdouble y2,
-                     gint n_style)
+                     GdkGC *style)
 {
-    GtkWidget *top;
     GdkPixmap *pixmap;
-    GdkGC **style;
     gint a, b, c, d;
-
-    /* holt die verschiedenen Styles */
-    top = gtk_widget_get_toplevel(darea);
-    style = (GdkGC **) g_object_get_data(G_OBJECT(top), "style");
 
     /* holt das pixmap vom Zeichenbereich */
     pixmap = g_object_get_data(G_OBJECT(darea), "pixmap");
+
+    /* prüft, ob die Linie über die Grenzen des Koordinatensystems
+       stoßen würde, und passt es gegebenenfalls an */
+    CHECK_BORDER(x2, coord->max_x, coord->min_x, coord->x_fact, darea)
+    CHECK_BORDER(y2, coord->max_y, coord->min_y, coord->y_fact, darea)
+
+
 
     /* rechnet die Koordinaten um */
     a = coord_real_x(x1, coord);
     b = coord_real_y(y1, coord);
     c = coord_real_x(x2, coord);
     d = coord_real_y(y2, coord);
-    /* coord_get_real(&x1, &y1, coord);
-    coord_get_real(&x2, &y2, coord); */
 
     /* zeichnet eine Linie von P1 nach P2 */
-    gdk_draw_line(pixmap, style[n_style], a, b, c, d);
-
-    /* gibt den Bereich zum Zeichnen auf den Bildschirm frei */
-    gtk_widget_queue_draw_area(darea, a, b, c, d);
+    gdk_draw_line(pixmap, style, a, b, c, d);
 }
-
-/* zeichnet eine Funktion "gf" auf den Zeichenbereich darea */
-void graph_draw_func(GraphFunc *gf, GtkWidget *darea, CoordSystem *coord)
-{
-    gdouble step, x, y, x_old, y_old;
-
-    /* die Schrittgröße ist ein Pixel */
-    step = 1 / coord->x_fact;
-
-    /* berechnet die Startwerte */
-    x_old = coord->min_x;
-    y_old = gf->func(x_old, gf->data);
-
-    /* zeichnet Schritt für Schritt die Punkte */
-    for (x = coord->min_x; x <= coord->max_x; x += step) {
-        y = gf->func(x, gf->data);
-        if (x != coord->min_x)
-            graph_draw_line(darea, coord,
-                            x_old, y_old,
-                            x, y,
-                            1);
-        x_old = x;
-        y_old = y;
-    }
-}
-

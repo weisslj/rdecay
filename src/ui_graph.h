@@ -23,18 +23,21 @@
 #ifndef _UI_GRAPH_H
 #define _UI_GRAPH_H
 
-#include <gtk/gtk.h>
-
 #include "graph.h"
 #include "coord.h"
 
-gboolean graph_resize(GtkWidget *darea, GdkEventConfigure *event, CoordSystem *coord);
+#include <gtk/gtk.h>
+
+gboolean graph_rebuild(GtkWidget *darea);
+gboolean graph_redraw(GtkWidget *darea);
+void graph_update(GtkWidget *darea);
 void coord_system_draw(GtkWidget *darea, CoordSystem *coord);
 void graph_draw(Graph *gr, GtkWidget *darea, CoordSystem *coord);
-void graph_draw_func(GraphFunc *gf, GtkWidget *darea, CoordSystem *coord);
 void graph_draw_line(GtkWidget *darea, CoordSystem *coord,
                      gdouble x1, gdouble y1,
                      gdouble x2, gdouble y2,
-                     gint n_style);
+                     GdkGC *style);
+gboolean coord_draw_pos(GtkWidget *darea, GdkEventButton *event);
+void coord_system_store(GtkWidget *widget, CoordSystem *coord);
 
 #endif /* _UI_GRAPH_H */

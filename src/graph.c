@@ -20,10 +20,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <glib.h>
-
 #include "graph.h"
-#include "coord.h"
+#include "util.h"
+
+#include <gtk/gtk.h>
 
 /* reserviert Speicher, erstellt neuen Punkt
    und gibt seine Adresse zurück */
@@ -49,36 +49,83 @@ Point point_new(gdouble x, gdouble y)
     return p;
 }
 
-/* erstellt einen neuen Graphen */
-Graph *graph_new(gint style)
+/* zerstört einen Punkt */
+void point_free(Point *p)
+{
+    g_free(p);
+}
+
+/* erstellt einen neuen Graphen des Stils style mit den
+   Anfangskoordinaten x und y */
+Graph *graph_new(GdkGC *style, gboolean active, gdouble x, gdouble y)
 {
     Graph *gr;
 
     gr = (Graph *) g_malloc(sizeof(Graph));
 
     gr->style = style;
+    gr->active = active;
     gr->points = NULL;
+    graph_add(gr, x, y);
 
     return gr;
 }
 
 /* erstellt einen neuen Graphen anhand der Funktion "gf" */
-Graph *graph_new_by_func(GraphFunc *gf, gint style, CoordSystem *coord)
+Graph *graph_new_by_func(GraphFunc func, gpointer data,
+                         GdkGC *style, gboolean active,
+                         gdouble x_begin, gdouble x_end,
+                         gdouble step)
 {
     Graph *gr;
-    Point *p;
-    gdouble step, x, y;
+    gdouble x, y;
 
-    gr = graph_new(style);
-
-    /* die Schrittgröße ist ein Pixel */
-    step = 1 / coord->x_fact;
+    gr = (Graph *) g_malloc(sizeof(Graph));
+    gr->style = style;
+    gr->active = active;
+    gr->points = NULL;
 
     /* trägt Schritt für Schritt die Koordinaten in die Liste ein */
-    for (x = coord->min_x; x <= coord->max_x; x += step) {
-        y = gf->func(x, gf->data);
-        p = point_alloc(x, y);
-        gr->points = g_list_append(gr->points, p);
+    for (x = x_begin; x <= x_end; x += step) {
+        y = func(x, data);
+        graph_add(gr, x, y);
+    }
+
+    return gr;
+}
+
+/* erstellt einen neuen stufigen Graphen */
+Graph *graph_step_new_by_func(GraphFunc func, gpointer data,
+                              GdkGC *style, gboolean active,
+                              gdouble x_begin, gdouble x_end,
+                              gdouble step)
+{
+    Graph *gr;
+    gdouble x, y_curr, y_prev, y_next;
+
+    gr = (Graph *) g_malloc(sizeof(Graph));
+    gr->style = style;
+    gr->active = active;
+    gr->points = NULL;
+
+    y_curr = func(x_begin, data);
+    y_next = func(x_begin + step, data);
+    graph_add(gr, x_begin, y_curr);
+    if (y_curr > y_next)
+        graph_add(gr, x_begin, y_next);
+
+    for (x = x_begin + step; x <= x_end; x += step) {
+        y_prev = y_curr;
+        y_curr = y_next;
+        y_next = func(x + step, data);
+
+        if (y_curr > y_next) {
+            graph_add(gr, x, y_curr);
+            graph_add(gr, x, y_next);
+        } else {
+            graph_add(gr, x, y_prev);
+            graph_add(gr, x, y_curr);
+        }
     }
 
     return gr;
@@ -98,10 +145,25 @@ void graph_add(Graph *gr, gdouble x, gdouble y)
     else
         gr->points = g_list_last(gr->points);
 }
-    
+
+/* schaltet den Graphen an und aus */
+void graph_toggle(GtkWidget *check, Graph *gr)
+{
+    gr->active = TOGGLE(gr->active);
+}
+
 /* stellt den Speicher des Graphen wieder zur Verfügung */
 void graph_free(Graph *gr)
 {
+    GList *point;
+
+    point = g_list_first(gr->points);
+
+    while (point != NULL) {
+        point_free(point->data);
+        point = point->next;
+    }
+
     g_list_free(gr->points);
     g_free(gr);
 }

@@ -2,6 +2,10 @@ bin_PROGRAMS = rdecay
 rdecay_SOURCES = \
     main.c        \
     gettext.h     \
+    arg.c         arg.h       \
+    opt.c         opt.h       \
+    atoms.c       atoms.h     \
+    gui.c         gui.h       \
     afield.c      afield.h    \
     coord.c       coord.h     \
     graph.c       graph.h     \
@@ -11,13 +15,12 @@ rdecay_SOURCES = \
     darea.c       darea.h     \
     status.c      status.h    \
     timer.c       timer.h     \
+    util.c        util.h      \
     random.c      random.h    \
     sim.c         sim.h
 
 #    sound.c       sound.h
 
 localedir = $(datadir)/locale
-#AM_CFLAGS = -ansi -pedantic -W -Wall -DLOCALEDIR=\"$(localedir)\" @GTK_CFLAGS@ @GSL_CFLAGS@ @SDL_CFLAGS@
-#LIBS = @LIBINTL@ @LIBS@ @GTK_LIBS@ @GSL_LIBS@ @SDL_LIBS@
 AM_CFLAGS = -DLOCALEDIR=\"$(localedir)\" @WARN_FLAGS@ @GTK_CFLAGS@ @GSL_CFLAGS@
 LIBS = @LIBINTL@ @LIBS@ @GTK_LIBS@ @GSL_LIBS@

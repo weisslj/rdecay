@@ -23,9 +23,7 @@
 #ifndef _GRAPH_H
 #define _GRAPH_H
 
-#include <glib.h>
-
-#include "coord.h"
+#include <gtk/gtk.h>
 
 typedef struct _Point Point;
 
@@ -38,25 +36,28 @@ struct _Point {
 typedef struct _Graph Graph;
 
 struct _Graph {
-    gint style;
+    gboolean active;
+    GdkGC *style;
     GList *points;
 };
 
-typedef gdouble (*GraphHandler)(gdouble, gpointer);
-typedef struct _GraphFunc GraphFunc;
-
-struct _GraphFunc {
-    GraphHandler func;
-    gpointer data;
-};
-
+typedef gdouble (*GraphFunc)(gdouble, gpointer);
 
 Point *point_alloc(gdouble x, gdouble y);
 Point point_new(gdouble x, gdouble y);
+void point_free(Point *p);
 
-Graph *graph_new(gint style);
-Graph *graph_new_by_func(GraphFunc *gf, gint style, CoordSystem *coord);
+Graph *graph_new(GdkGC *style, gboolean active, gdouble x, gdouble y);
+Graph *graph_new_by_func(GraphFunc func, gpointer data,
+                         GdkGC *style, gboolean active,
+                         gdouble x_begin, gdouble x_end,
+                         gdouble step);
+Graph *graph_step_new_by_func(GraphFunc func, gpointer data,
+                              GdkGC *style, gboolean active,
+                              gdouble x_begin, gdouble x_end,
+                              gdouble step);
 void graph_add(Graph *gr, gdouble x, gdouble y);
+void graph_toggle(GtkWidget *check, Graph *gr);
 void graph_free(Graph *gr);
 
 #endif /* _GRAPH_H */

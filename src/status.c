@@ -20,65 +20,35 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "status.h"
+#include "atoms.h"
+#include "util.h"
+
 #include <gtk/gtk.h>
 #include <stdarg.h>
-
-#include "status.h"
-#include "sim.h"
-
-#if HAVE_CONFIG_H
-#include <config.h>
-#endif
-
-#include "gettext.h"
-#define _(String) gettext (String)
-#define N_(String) gettext_noop (String)
-
-/* die statische Liste der Atomnamen */
-static const gchar *atom_names[] = {
-    N_("mother"),
-    N_("doughter"),
-    N_("grandchild")
-};
-
-static gint label_printf(GtkWidget *label, const gchar *format, ...);
-
-/* gibt den Namen des Atoms mit der Nummer "state" zurück */
-G_CONST_RETURN gchar *get_atom_name(gint state)
-{
-    return atom_names[state];
-}
+#include <stdio.h>
 
 /* aktualisiert die Statusanzeige der Atome */
-void status_update_atoms(GtkWidget **label_atom, gint *atoms)
+void status_update_atoms(GtkWidget **label_atom, gulong *atoms)
 {
     gint i;
 
-    for (i = 0; i < ATOM_STATES; i++)
-        label_printf(label_atom[i], _("%s atoms: %d"), atom_names[i], atoms[i]);
+/*    printf("status_update_atoms\n");
+    printf("label_atom: %p | atoms: %p\n", (gpointer) label_atom, (gpointer) atoms); */
+
+    for (i = 0; i < ATOM_STATES; i++) {
+/*        printf("label_atom[%d]: %p | atoms[%d] : %lu\n", i, (gpointer) label_atom[i], i, atoms[i]); */
+        label_printf(label_atom[i], "%u", atoms[i]);
+    }
+
+/*    printf("\n"); */
 }
 
 /* aktualisiert die Statusanzeige der Zeit */
 void status_update_time(GtkWidget *label_time, gdouble time)
 {
-    label_printf(label_time, _("time: %.2f"), time);
-}
-
-/* schreibt auf ein GtkLabel wie mit printf */
-static gint label_printf(GtkWidget *label, const gchar *format, ...)
-{
-    gchar *text;
-    va_list ap;
-
-    va_start(ap, format);
-    text = g_strdup_vprintf(format, ap);
-    va_end(ap);
-
-    if (text == NULL)
-        return 0;
-
-    gtk_label_set_text(GTK_LABEL(label), text);
-    g_free(text);
-
-    return 1;
+    if (time > 10000)
+        label_printf(label_time, "%.2es", time);
+    else
+        label_printf(label_time, "%.2fs", time);
 }

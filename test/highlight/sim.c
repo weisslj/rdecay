@@ -57,7 +57,7 @@ void sim_decay(GtkWidget *button_start, gsl_rng *rand)
 
     top = gtk_widget_get_toplevel(button_start);
 
-    /* holt ein paar gespeicherte Widgets */
+    /* holt ein paar gespeicherte Widgets äöü */
     button_stop = g_object_get_data(G_OBJECT(top), "button_stop");
     spin_number = g_object_get_data(G_OBJECT(top), "spin_number");
     spin_htime = g_object_get_data(G_OBJECT(top), "spin_htime");
@@ -71,7 +71,7 @@ void sim_decay(GtkWidget *button_start, gsl_rng *rand)
     gtk_button_set_label(GTK_BUTTON(button_start), _("pause"));
     gtk_button_leave(GTK_BUTTON(button_start));
 
-    /* bereitet den Stopbutton vor */
+    /* bereitet den Stopbutton vor € */
     quit = 0;
     gtk_widget_set_sensitive(button_stop, TRUE);
     g_signal_connect(G_OBJECT(button_stop), "clicked",
@@ -99,8 +99,8 @@ void sim_decay(GtkWidget *button_start, gsl_rng *rand)
              (darea + 1)->allocation.height);
     afield_randomize(afield, rand);
 
-    sig_darea[0] = g_signal_connect(G_OBJECT(darea[0]), "configure_event",
-                                    G_CALLBACK(afield_resize), afield);
+    sig_darea[0] = g_signal_connect(G_OBJECT(darea[0]),
+    "configure_event", G_CALLBACK(afield_resize), afield);
 
     tstep = 0.003;
     pos = 0;

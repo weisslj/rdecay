@@ -23,9 +23,25 @@
 #ifndef _UTIL_H
 #define _UTIL_H
 
-#define IGNORE(x) x = x
+#include <gtk/gtk.h>
+#include <stdarg.h>
 
-double log2(double x);
+#define IGNORE(x) x = x
+#define ROUND(x, type) ((type) ((x) + (((x) >= 0) ? 0.5 : -0.5)))
+#define TOGGLE(x) ((x) ? FALSE : TRUE)
+
+gdouble log2(gdouble x);
+gint ipow(gint x, guint y);
+gdouble round_digits(gdouble x, guint digits);
+gboolean layout_printf(PangoLayout *layout, const gchar *format, ...);
+gboolean layout_vprintf(PangoLayout *layout, const gchar *format, va_list arg);
+gboolean label_printf(GtkWidget *label, const gchar *format, ...);
+gdouble dmax(gdouble x, gdouble y);
+gint max_n(gint n, ...);
+gdouble fmax_n(gint n, gdouble *num);
+gdouble closest_val(gdouble val, gint n, ...);
+void nlist_remove(gulong *array, gulong index, gulong len);
+void widget_modify_bg(GtkWidget *widget, GdkColor *color);
 
 
 #endif /* _UTIL_H */

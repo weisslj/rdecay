@@ -23,32 +23,37 @@
 #ifndef _AFIELD_H
 #define _AFIELD_H
 
-#include <glib.h>
+#include <gtk/gtk.h>
 #include <gsl/gsl_rng.h>
 
-typedef struct _AtomCoord AtomCoord;
+typedef struct _AtomInfo AtomInfo;
 
-struct _AtomCoord {
+struct _AtomInfo {
     gint state;
     gint x;
     gint y;
 };
 
+
 typedef struct _AtomField AtomField;
 
 struct _AtomField {
-    gint number;
+    gulong number;
     gint wide;
-    AtomCoord *coords;
+
+    gulong *mask;
+    gulong *pos;
+
+    gboolean uniform;
+    GdkGC *ustyle;
+
+    AtomInfo *atoms;
 };
 
-AtomField *afield_new(gint number, gint field_width, gint field_height);
+AtomField *afield_new(gulong number, GtkWidget *darea);
+void afield_reset(AtomField *af, gulong number);
 void afield_free(AtomField *af);
 void afield_randomize(AtomField *af, gsl_rng *rand);
-void afield_distrib_decays(gint decays, AtomField *af,
-                           gint atoms, gint state,
-                           gsl_rng *rand);
-gint afield_distrib_decay(AtomField *af, gint state, gsl_rng *rand);
-void afield_arrange(AtomField *af, gint field_width, gint field_height);
+void afield_arrange(AtomField *af, GtkWidget *darea);
 
 #endif /* _AFIELD_H */

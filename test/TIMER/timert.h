@@ -1,5 +1,5 @@
 /* 
- * darea.h - Zeichenbereiche
+ * timer.h - Zeitmessung
  *
  * Copyright 2004 Johannes Weißl
  *
@@ -20,19 +20,33 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _DAREA_H
-#define _DAREA_H
+#ifndef _TIMER_H
+#define _TIMER_H
 
-#include <gtk/gtk.h>
+#include <glib.h>
 
-#define N_DAREAS 2
+/* Mikrosekunden pro Sekunde */
+#define USEC_PER_SEC 1000000
 
-GtkWidget *darea_new(void);
-void darea_clear(GtkWidget *darea);
-void darea_update(GtkWidget *darea);
+typedef struct _MyTimer MyTimer;
 
-void darea_init(GtkWidget *darea);
-gboolean darea_resize(GtkWidget *darea);
-gboolean darea_redraw(GtkWidget *darea, GdkEventExpose *event);
+struct _MyTimer
+{
+    gdouble start;
+    gdouble stop;
+    gdouble delay;
+    gdouble diff;
 
-#endif /* _DAREA_H */
+    gboolean active;
+};
+
+
+MyTimer* timer_new(void);
+void timer_destroy(MyTimer *timer);
+void timer_start(MyTimer *timer);
+void timer_stop(MyTimer *timer);
+void timer_reset(MyTimer *timer);
+gdouble timer_elapsed(MyTimer *timer);
+gboolean timer_is_running(MyTimer *timer);
+
+#endif /* _TIMER_H */

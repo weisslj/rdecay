@@ -25,9 +25,7 @@
 
 #include <gtk/gtk.h>
 
-G_CONST_RETURN gchar *get_atom_name(gint state);
-
-void status_update_atoms(GtkWidget **label_atom, gint *atoms);
+void status_update_atoms(GtkWidget **label_atom, gulong *atoms);
 void status_update_time(GtkWidget *label_time, gdouble time);
 
 #endif /* _STATUS_H */

@@ -20,60 +20,118 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <gtk/gtk.h>
-
 #include "ui_afield.h"
+#include "darea.h"
 #include "afield.h"
+#include "timer.h"
 #include "util.h"
+
+#include <gtk/gtk.h>
 
 /* passt das Atomfeld an eine veränderte Größe an */
 gboolean afield_resize(GtkWidget *darea, GdkEventConfigure *event, AtomField *af)
 {
-    IGNORE(event);
-    afield_arrange(af, darea->allocation.width, darea->allocation.height);
+    afield_arrange(af, darea);
     afield_draw(darea, af);
 
     return FALSE;
 }
 
 /* zeichnet ein Atom auf das Atomfeld */
-void draw_atom(GtkWidget *darea, AtomCoord *coord, gint wide)
+void afield_draw_atom(GtkWidget *darea, AtomField *af, gulong n)
 {
     GtkWidget *top;
     GdkPixmap *pixmap;
     GdkGC **style;
-    gint real_wide, wide_diff;
 
     /* holt die verschiedenen Styles */
     top = gtk_widget_get_toplevel(darea);
-    style = (GdkGC **) g_object_get_data(G_OBJECT(top), "style");
+    style = g_object_get_data(G_OBJECT(top), "style_atom");
 
     /* holt das pixmap vom Zeichenbereich */
     pixmap = g_object_get_data(G_OBJECT(darea), "pixmap");
 
-    /* berechnet die echte Breite, und den Abstand, der zu den
-       umliegenden Atomen eingehalten wird */
-    real_wide = wide * 0.8;
-    wide_diff = (wide - real_wide) / 2.0;
-
     /* zeichnet das Rechteck */
     gdk_draw_rectangle(pixmap,
-                       style[coord->state],
+                       style[(af->atoms + n)->state],
                        TRUE,
-                       coord->x + wide_diff, coord->y + wide_diff,
-                       real_wide, real_wide);
+                       (af->atoms + n)->x, (af->atoms + n)->y,
+                       af->wide, af->wide);
+}
 
-    /* gibt den Bereich zum Zeichnen auf den Bildschirm frei */
-    gtk_widget_queue_draw_area(darea,
-                               coord->x + wide_diff, coord->y + wide_diff,
-                               real_wide, real_wide);
+void afield_tint(GtkWidget *darea, AtomField *af, gulong *atoms, gint states)
+{
+    GtkWidget *top;
+    GdkPixmap *pixmap;
+    GdkColor **color, *new_color;
+    GdkColormap *colormap;
+    gdouble percent;
+    gint i;
+
+    /* holt das pixmap vom Zeichenbereich */
+    top = gtk_widget_get_toplevel(darea);
+    color = g_object_get_data(G_OBJECT(top), "color_atom");
+    pixmap = g_object_get_data(G_OBJECT(darea), "pixmap");
+
+    new_color = (GdkColor *) g_malloc(sizeof(GdkColor));
+    new_color->red = new_color->green = new_color->blue = 0;
+
+    for (i = 0; i < states; i++) {
+        percent = atoms[i] / (gdouble) af->number;
+        new_color->red += (color[i])->red * percent;
+        new_color->green += (color[i])->green * percent;
+        new_color->blue += (color[i])->blue * percent;
+    }
+
+    colormap = gdk_colormap_get_system();
+    gdk_colormap_alloc_color(colormap, new_color, FALSE, TRUE);
+
+    gdk_gc_set_foreground(af->ustyle, new_color);
+
+    gdk_draw_rectangle(pixmap,
+                       af->ustyle,
+                       TRUE,
+                       0, 0,
+                       darea->allocation.width,
+                       darea->allocation.height);
+
+    /* gibt den Bereich zum Zeichnen auf dem Bildschirm frei */
+    darea_update(darea);
+
+    g_free(new_color);
+}
+
+void afield_distrib_decays(GtkWidget *darea, AtomField *af, gulong decays, gint state)
+{
+    gulong i, hit;
+
+    for (i = 0; i < decays; i++) {
+        hit = af->mask[af->pos[state]++];
+        (af->atoms + hit)->state++;
+        afield_draw_atom(darea, af, hit);
+    }
 }
 
 /* zeichnet das Atomfeld in einen Zeichenbereich */
 void afield_draw(GtkWidget *darea, AtomField *af)
 {
-    gint i;
+    gulong i;
     for (i = 0; i < af->number; i++)
-        draw_atom(darea, (af->coords + i), af->wide);
+        afield_draw_atom(darea, af, i);
 }
 
+gboolean afield_benchmark(GtkWidget *darea, AtomField *af, gdouble max_t)
+{
+    MyTimer *timer;
+    gulong i;
+
+    timer = timer_new(1.0);
+
+    for (i = 0; i < af->number; i++) {
+        if (timer_elapsed(timer) > max_t)
+            return FALSE;
+        afield_draw_atom(darea, af, i);
+    }
+
+    return TRUE;
+}

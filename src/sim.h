@@ -23,19 +23,25 @@
 #ifndef _SIM_H
 #define _SIM_H
 
+#include "coord.h"
+#include "afield.h"
+
 #include <gtk/gtk.h>
 #include <gsl/gsl_rng.h>
-
-#define ATOM_STATES 3
 
 typedef struct _SimData SimData;
 
 struct _SimData {
+    AtomField *afield;
+    CoordSystem *coord_number,
+                *coord_activity;
+    gsl_rng *rand;
+
     gint states;
-    gint atoms[ATOM_STATES];
-    gdouble thalf[ATOM_STATES - 1];
+    gulong *atoms;
+    gdouble *thalf;
 };
 
-void sim_decay(GtkWidget *button, gsl_rng *rand);
+void sim_decay(GtkWidget *button_start, SimData *sdata);
 
 #endif /* _SIM_H */

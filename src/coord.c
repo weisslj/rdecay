@@ -20,14 +20,28 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <glib.h>
-
 #include "coord.h"
+#include "graph.h"
+#include "util.h"
 
-static gdouble gen_unit_system(gdouble min, gdouble max);
+#include <gtk/gtk.h>
+#include <stdarg.h>
+
+enum { WIDTH, HEIGHT };
+
+static gdouble gen_step_size(gdouble len, gboolean fract);
+
+static gint get_number_size(gdouble n, gdouble fract, gint type, PangoLayout *layout);
+static gint get_text_size(gint type, PangoLayout *layout, const gchar *format, ...);
+
+static gint get_y_label_width(CoordSystem *coord, PangoLayout *layout);
+static gint get_x_label_height(CoordSystem *coord, PangoLayout *layout);
 
 /* erstellt ein neues Koordinatensystem */
-CoordSystem *coord_system_new(gint field_width, gint field_height,
+CoordSystem *coord_system_new(GtkWidget *darea,
+                              const gchar *x_title, const gchar *x_unit,
+                              const gchar *y_title, const gchar *y_unit,
+                              gboolean fract_x, gboolean fract_y,
                               gdouble min_x, gdouble max_x,
                               gdouble min_y, gdouble max_y)
 {
@@ -40,7 +54,18 @@ CoordSystem *coord_system_new(gint field_width, gint field_height,
 
     coord = (CoordSystem *) g_malloc(sizeof(CoordSystem));
 
-    coord_system_adjust(coord, field_width, field_height,
+    coord->x_title = g_strdup(x_title);
+    coord->y_title = g_strdup(y_title);
+
+    coord->x_unit = g_strdup(x_unit);
+    coord->y_unit = g_strdup(y_unit);
+
+    coord->fract_x = fract_x;
+    coord->fract_y = fract_y;
+
+    coord->graphs = NULL;
+
+    coord_system_adjust(coord, darea,
                         min_x, max_x, min_y, max_y);
 
     return coord;
@@ -50,37 +75,63 @@ CoordSystem *coord_system_new(gint field_width, gint field_height,
    wieder zur Verfügung */
 void coord_system_free(CoordSystem *coord)
 {
+    g_free(coord->x_title);
+    g_free(coord->y_title);
+    g_free(coord->x_unit);
+    g_free(coord->y_unit);
+    coord_system_clear(coord);
     g_free(coord);
+}
+
+/* befreiht das Koordinatensystem von allen Graphen */
+void coord_system_clear(CoordSystem *coord)
+{
+    GList *graph;
+
+    if (coord->graphs == NULL)
+        return;
+
+    graph = g_list_first(coord->graphs);
+
+    while (graph != NULL) {
+        graph_free(graph->data);
+        graph = graph->next;
+    }
+
+    g_list_free(coord->graphs);
+    coord->graphs = NULL;
+}
+
+/* verankert einen Graphen im Koordinatensystem */
+void coord_system_add_graph(CoordSystem *coord, Graph *gr)
+{
+    coord->graphs = g_list_append(coord->graphs, gr);
 }
 
 /* berechnet alle Werte, die man zum Zeichnen eines Koordinatensystems
    und von Graphen benötigt, anhand der Größe des Feldes, und den
    maximal erwarteten Werten */
-void coord_system_adjust(CoordSystem *coord,
-                         gint field_width, gint field_height,
+void coord_system_adjust(CoordSystem *coord, GtkWidget *darea,
                          gdouble min_x, gdouble max_x,
                          gdouble min_y, gdouble max_y)
 {
-    gint x_axis, y_axis;
+    GdkScreen *screen;
+    PangoLayout *layout;
+    gint x_axis, y_axis, cm_x, cm_y;
 
     /* bricht ab, wenn der größte Wert niedriger als der
        Kleinste ist, oder umgekehrt */
     if (min_x >= max_x || min_y >= max_y)
         return;
 
-    /* die Achsen sollen nur 95% des Feldes ausfüllen */
-    x_axis = 0.95 * field_width;
-    y_axis = 0.95 * field_height;
+    layout = g_object_get_data(G_OBJECT(darea), "layout");
 
-    /* berechnet die Beginn- und Endpunkte der Achsen */
-    coord->x_axis_begin = (field_width - x_axis) / 2.0;
-    coord->x_axis_end = coord->x_axis_begin + x_axis;
-    coord->y_axis_end = (field_height - y_axis) / 2.0;
-    coord->y_axis_begin = coord->y_axis_end + y_axis;
-
-    /* errechnet die Schrittgröße der Achsen */
-    coord->step_x = gen_unit_system(min_x, max_x);
-    coord->step_y = gen_unit_system(min_y, max_y);
+    /* rechnet einen Zentimeter in Pixel um */
+    screen = gdk_screen_get_default();
+    cm_x = (gint) ((gdouble) (10 * gdk_screen_get_width(screen)) /
+                   (gdouble) gdk_screen_get_width_mm(screen) + 0.5);
+    cm_y = (gint) ((gdouble) (10 * gdk_screen_get_height(screen)) /
+                   (gdouble) gdk_screen_get_height_mm(screen) + 0.5);
 
     /* kopiert die Minimal- und Maximalwerte in die Struktur */
     coord->min_x = min_x;
@@ -88,61 +139,122 @@ void coord_system_adjust(CoordSystem *coord,
     coord->min_y = min_y;
     coord->max_y = max_y;
 
+    /* berechnet die Beginn- und Endpunkte der Achsen */
+    coord->x_axis_begin = get_y_label_width(coord, layout) + 15;
+    coord->x_axis_end = darea->allocation.width - ARROW_SHANK - get_text_size(WIDTH, layout, "%s [%s]", coord->x_title, coord->x_unit) - 5;
+    coord->y_axis_begin = darea->allocation.height - get_x_label_height(coord, layout) - 15;
+    coord->y_axis_end = ARROW_SHANK + get_text_size(HEIGHT, layout, "%s [%s]", coord->y_title, coord->y_unit) + 10;
+
+    /* berechnet die Länge der Achsen */
+    x_axis = ABS(coord->x_axis_end - coord->x_axis_begin);
+    y_axis = ABS(coord->y_axis_end - coord->y_axis_begin);
+
     /* berechnet den Faktor zum Umrechnen der Größen */
     coord->x_fact = (gdouble) x_axis / (gdouble) (max_x - min_x);
     coord->y_fact = (gdouble) y_axis / (gdouble) (max_y - min_y);
+
+    /* errechnet die Schrittgröße der Achsen */
+    coord->step_x = gen_step_size(2 * cm_x / coord->x_fact, coord->fract_x);
+    coord->step_y = gen_step_size(2 * cm_y / coord->y_fact, coord->fract_y);
 
     /* berechnet die Koordinaten des Ursprungs */
     coord->zero_x = coord->x_axis_begin - ((gdouble) x_axis * ((gdouble) min_x / (gdouble) (max_x - min_x)));
     coord->zero_y = coord->y_axis_end + ((gdouble) y_axis * ((gdouble) max_y / (gdouble) (max_y - min_y)));
 }
 
-/* FIXME */
+/* rechnet den X-Wert eines Punktes im Koordinatensystems in einen
+   echten auf dem Zeichenbereich um */
 gint coord_real_x(gdouble x, CoordSystem *coord)
 {
-    return coord->zero_x + x * coord->x_fact;
+    return (gint) (coord->zero_x + x * coord->x_fact + 0.5);
 }
 
-/* FIXME */
+/* siehe coord_real_x, nur Y-Wert statt X-Wert */
 gint coord_real_y(gdouble y, CoordSystem *coord)
 {
-    return coord->zero_y - y * coord->y_fact;
-}
-
-/* FIXME */
-void coord_get_real(gdouble *x, gdouble *y, CoordSystem *coord)
-{
-    *x = coord->zero_x + *x * coord->x_fact;
-    *y = coord->zero_y - *y * coord->y_fact;
+    return (gint) (coord->zero_y - y * coord->y_fact + 0.5);
 }
 
 /* berechnet die Schrittgröße der Achsennummerierung */
-static gdouble gen_unit_system(gdouble min, gdouble max)
+static gdouble gen_step_size(gdouble len, gboolean fract)
 {
-    gdouble x, len, step;
+    gdouble x;
 
-    if (min > 0)
-        min = 0;
+    if (len >= 1.0) {
+        for (x = 1.0; (len / x) > 1.0; x *= 10.0)
+            ;
+    } else {
+        if (!fract)
+            return 1.0;
+        for (x = 1.0; (len / x) < 0.1; x /= 10.0)
+            ;
+    }
 
-    if (max < 0)
-        max = 0;
+    return closest_val(len, 4, x, x / 2.0, x / 5.0, x / 10.0);
+}
 
-    len = MAX(max - 0, 0 - min);
+/* berechnet die Größe von Zahlen auf dem Zeichenbereich */
+static gint get_number_size(gdouble n, gdouble fract, gint type, PangoLayout *layout)
+{
+    gint width, height;
 
-    for (x = 1; (len / x) > 1.0; x *= 10)
-        ;
+    if (fract)
+        n = ROUND(n, gint);
+    else if (n >= 0.01)
+        n = round_digits(n, 2);
 
-    step = x / 10;
+    layout_printf(layout, "%g", n);
+    pango_layout_get_pixel_size(layout, &width, &height);
 
-    for (x = 0; x < (max - 0); x += step)
-        ;
+    if (type == WIDTH)
+        return width;
+    else if (type == HEIGHT)
+        return height;
+    else
+        return -1;
+}
 
-    max = x - 0;
+/* berechnet die Größe von Text auf dem Zeichenbereich */
+static gint get_text_size(gint type, PangoLayout *layout, const gchar *format, ...)
+{
+    gint width, height;
+    va_list ap;
 
-    for (x = 0; x < (0 - min); x += step)
-        ;
+    va_start(ap, format);
+    layout_vprintf(layout, format, ap);
+    va_end(ap);
 
-    min = 0 - x;
+    pango_layout_get_pixel_size(layout, &width, &height);
 
-    return step;
+    if (type == WIDTH)
+        return width;
+    else if (type == HEIGHT)
+        return height;
+    else
+        return -1;
+}
+
+/* berechnet die Breite der Y-Achsen Beschriftung */
+static gint get_y_label_width(CoordSystem *coord, PangoLayout *layout)
+{
+    gint pos, neg, title;
+
+    pos = get_number_size(coord->max_y, coord->fract_y, WIDTH, layout);
+    neg = get_number_size(coord->min_y, coord->fract_y, WIDTH, layout);
+    title = get_text_size(WIDTH, layout, "%s [%s]", coord->y_title, coord->y_unit);
+
+    return max_n(3, pos, neg, title);
+}
+
+/* berechnet die Höhe der X-Achsen Beschriftung */
+static gint get_x_label_height(CoordSystem *coord, PangoLayout *layout)
+{
+    gint pos, neg, title;
+
+    pos = get_number_size(coord->max_x, coord->fract_x, HEIGHT, layout);
+    neg = get_number_size(coord->min_x, coord->fract_x, HEIGHT, layout);
+    layout_printf(layout, "%s [%s]", coord->x_title, coord->x_unit);
+    title = get_text_size(HEIGHT, layout, "%s [%s]", coord->x_title, coord->x_unit);
+
+    return max_n(3, pos, neg, title);
 }

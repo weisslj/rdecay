@@ -20,10 +20,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <gtk/gtk.h>
-
 #include "darea.h"
 #include "util.h"
+
+#include <gtk/gtk.h>
 
 /* erstellt einen neuen Zeichenbereich */
 GtkWidget *darea_new(void)
@@ -63,19 +63,23 @@ void darea_clear(GtkWidget *darea)
                        darea->allocation.width,
                        darea->allocation.height);
 
-    /* gibt den Bereich zum Zeichnen auf dem Bildschirm frei */
+}
+
+/* gibt den Zeichenbereich zum Zeichnen auf dem Bildschirm frei */
+void darea_update(GtkWidget *darea)
+{
     gtk_widget_queue_draw_area(darea,
                                0, 0,
                                darea->allocation.width,
                                darea->allocation.height);
 }
+    
 
 /* bereitet einen Zeichenbereich zum Zeichnen vor */
-void darea_init(GtkWidget *darea, gpointer data)
+void darea_init(GtkWidget *darea)
 {
     GdkPixmap *pixmap;
-
-    IGNORE(data);
+    PangoLayout *layout;
 
     /* erstellt ein "pixmap" (der Bereich, auf dem eigentlich
        gezeichnet wird */
@@ -83,21 +87,22 @@ void darea_init(GtkWidget *darea, gpointer data)
                             darea->allocation.width,
                             darea->allocation.height,
                             -1);
-
-    /* löscht den Zeichenbereich */
-    darea_clear(darea);
+    layout = gtk_widget_create_pango_layout(darea, NULL);
 
     /* speichert das pixmap im Zeichenbereich */
     g_object_set_data(G_OBJECT(darea), "pixmap", pixmap);
+    g_object_set_data(G_OBJECT(darea), "layout", layout);
+
+    /* löscht den Zeichenbereich */
+    darea_clear(darea);
+    darea_update(darea);
+
 }
 
 /* passt den Zeichenbereich an eine veränderte Größe an */
-gboolean darea_resize(GtkWidget *darea, GdkEventConfigure *event, gpointer data)
+gboolean darea_resize(GtkWidget *darea)
 {
     GdkPixmap *pixmap;
-
-    IGNORE(event);
-    IGNORE(data);
 
     /* gibt den Speicher des pixmaps frei */
     pixmap = g_object_get_data(G_OBJECT(darea), "pixmap");
@@ -120,11 +125,9 @@ gboolean darea_resize(GtkWidget *darea, GdkEventConfigure *event, gpointer data)
 }
 
 /* zeichnet den Inhalt des Zeichenbereichs neu auf dem Bildschirm */
-gboolean darea_redraw(GtkWidget *darea, GdkEventExpose *event, gpointer data)
+gboolean darea_redraw(GtkWidget *darea, GdkEventExpose *event)
 {
     GdkPixmap *pixmap;
-
-    IGNORE(data);
 
     /* holt das pixmap vom Zeichenbereich */
     pixmap = g_object_get_data(G_OBJECT(darea), "pixmap");

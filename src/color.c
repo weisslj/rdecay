@@ -20,20 +20,38 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <gtk/gtk.h>
-
 #include "color.h"
 
-#define RGB (65535 / 255)
+#include <gtk/gtk.h>
+
+#define RGB (65535.0 / 255.0)
 
 /* erstellt eine neue Farbe aus drei Farbwerten */
-GdkColor color_new(gint red, gint green, gint blue)
+GdkColor color_new(GdkColormap *colormap, gint red, gint green, gint blue)
 {
     GdkColor color;
 
     color.red = red * RGB;
     color.green = green * RGB;
     color.blue = blue * RGB;
+
+    gdk_colormap_alloc_color(colormap, &color, FALSE, TRUE);
+
+    return color;
+}
+
+/* reserviert Speicher und erstellt eine neue Farbe */
+GdkColor *color_alloc(GdkColormap *colormap, gint red, gint green, gint blue)
+{
+    GdkColor *color;
+
+    color = (GdkColor *) g_malloc(sizeof(GdkColor));
+
+    color->red = red * RGB;
+    color->green = green * RGB;
+    color->blue = blue * RGB;
+
+    gdk_colormap_alloc_color(colormap, color, FALSE, TRUE);
 
     return color;
 }

@@ -147,6 +147,10 @@ bin_PROGRAMS = rdecay
 rdecay_SOURCES = \
     main.c        \
     gettext.h     \
+    arg.c         arg.h       \
+    opt.c         opt.h       \
+    atoms.c       atoms.h     \
+    gui.c         gui.h       \
     afield.c      afield.h    \
     coord.c       coord.h     \
     graph.c       graph.h     \
@@ -156,6 +160,7 @@ rdecay_SOURCES = \
     darea.c       darea.h     \
     status.c      status.h    \
     timer.c       timer.h     \
+    util.c        util.h      \
     random.c      random.h    \
     sim.c         sim.h
 
@@ -163,8 +168,6 @@ rdecay_SOURCES = \
 
 #    sound.c       sound.h
 localedir = $(datadir)/locale
-#AM_CFLAGS = -ansi -pedantic -W -Wall -DLOCALEDIR=\"$(localedir)\" @GTK_CFLAGS@ @GSL_CFLAGS@ @SDL_CFLAGS@
-#LIBS = @LIBINTL@ @LIBS@ @GTK_LIBS@ @GSL_LIBS@ @SDL_LIBS@
 AM_CFLAGS = -DLOCALEDIR=\"$(localedir)\" @WARN_FLAGS@ @GTK_CFLAGS@ @GSL_CFLAGS@
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -174,10 +177,11 @@ CONFIG_CLEAN_FILES =
 bin_PROGRAMS = rdecay$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 
-am_rdecay_OBJECTS = main.$(OBJEXT) afield.$(OBJEXT) coord.$(OBJEXT) \
+am_rdecay_OBJECTS = main.$(OBJEXT) arg.$(OBJEXT) opt.$(OBJEXT) \
+	atoms.$(OBJEXT) gui.$(OBJEXT) afield.$(OBJEXT) coord.$(OBJEXT) \
 	graph.$(OBJEXT) color.$(OBJEXT) ui_afield.$(OBJEXT) \
 	ui_graph.$(OBJEXT) darea.$(OBJEXT) status.$(OBJEXT) \
-	timer.$(OBJEXT) random.$(OBJEXT) sim.$(OBJEXT)
+	timer.$(OBJEXT) util.$(OBJEXT) random.$(OBJEXT) sim.$(OBJEXT)
 rdecay_OBJECTS = $(am_rdecay_OBJECTS)
 rdecay_LDADD = $(LDADD)
 rdecay_DEPENDENCIES =
@@ -186,12 +190,15 @@ rdecay_LDFLAGS =
 DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/afield.Po ./$(DEPDIR)/color.Po \
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/afield.Po ./$(DEPDIR)/arg.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/atoms.Po ./$(DEPDIR)/color.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/coord.Po ./$(DEPDIR)/darea.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/graph.Po ./$(DEPDIR)/main.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/graph.Po ./$(DEPDIR)/gui.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/main.Po ./$(DEPDIR)/opt.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/random.Po ./$(DEPDIR)/sim.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/status.Po ./$(DEPDIR)/timer.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_afield.Po ./$(DEPDIR)/ui_graph.Po
+@AMDEP_TRUE@	./$(DEPDIR)/ui_afield.Po ./$(DEPDIR)/ui_graph.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/util.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
@@ -244,17 +251,22 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/afield.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arg.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/atoms.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/color.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/coord.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/darea.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/graph.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gui.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/opt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/random.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sim.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/status.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/timer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_afield.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_graph.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/util.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" \
