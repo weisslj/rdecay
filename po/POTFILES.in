@@ -3,3 +3,4 @@
 src/gui.c
 src/sim.c
 src/atoms.c
+src/main.c

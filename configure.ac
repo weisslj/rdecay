@@ -2,10 +2,10 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT(rdecay, 1.0.0, johannes.weissl@gmx.de)
+AC_INIT(rdecay, 1.0.1, johannes.weissl@gmx.de)
 AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_HEADER([config.h])
-AM_INIT_AUTOMAKE(rdecay, 1.0.0)
+AM_INIT_AUTOMAKE(rdecay, 1.0.1)
 
 AC_CANONICAL_HOST
 case $host_os in
@@ -47,7 +47,8 @@ PKG_CHECK_MODULES(GSL, gsl)
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([stdlib.h string.h sys/time.h unistd.h])
+AC_HEADER_TIME
+AC_CHECK_HEADERS([stdlib.h string.h sys/time.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -108,8 +109,13 @@ else
     AC_MSG_NOTICE([Microsoft Crypto API disabled])
 fi
 
-AC_CONFIG_FILES([Makefile intl/Makefile po/Makefile.in m4/Makefile 
-                 src/Makefile])
+AC_CONFIG_FILES([Makefile
+                 intl/Makefile
+                 po/Makefile.in
+                 m4/Makefile 
+                 src/Makefile
+                 doc/Makefile
+                 doc/de/Makefile])
 
 AC_OUTPUT
 

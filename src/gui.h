@@ -26,6 +26,8 @@
 #include <gtk/gtk.h>
 
 GtkWidget *gui_create(void);
+void gui_destroy(void);
+gboolean gui_delete(void);
 gdouble scale_get_speed(GtkWidget *scale_speed);
 
 #endif /* _GUI_H */

@@ -1,3 +1,19 @@
+2004-03-04  Johannes Weißl  <johannes.weissl@gmx.de>
+
+	* sim.c: when the window gets closed while the simulation is
+	  running, the sim_decay() function returns before destroying
+	  the main window
+	* timer.c: the speed now can be changed while the simulation
+	  is paused
+	* sim.c, atoms.c, gui.c: fixed spelling errors
+	* afield.c: fixed memory errors in afield_reset() and afield_new()
+	* sim.c: added missing condition to avoid arranging atoms in
+	  uniform-mode
+	* main.c, util.c: messages now get converted correctly into the
+	  locale encoding
+	* gui.c: the program doesn't crash anymore, if you select a
+	  template with more than ATOM_STATES generations
+
 2004-02-02  Johannes Weißl  <johannes.weissl@gmx.de>
 
 	* initial release

@@ -37,6 +37,7 @@ gboolean layout_printf(PangoLayout *layout, const gchar *format, ...);
 gboolean layout_vprintf(PangoLayout *layout, const gchar *format,
                         va_list arg);
 gboolean label_printf(GtkWidget *label, const gchar *format, ...);
+gint printf_utf8(const gchar *format, ...);
 gchar *strdup_pretty_number(gdouble d, gboolean fract);
 gdouble dmax(gdouble x, gdouble y);
 gint max_n(gint n, ...);

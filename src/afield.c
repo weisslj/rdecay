@@ -46,10 +46,17 @@ AtomField *afield_new(gulong number, GtkWidget *darea)
     /* erstellt trotzdem vorsorglich einen Uniform-Stil */
     af->ustyle = gdk_gc_new(darea->window);
 
-    /* reserviert Speicher f+r die Atomlisten; wenn nicht genügend
+    /* reserviert Speicher */
+    af->pos = (gulong *) g_malloc(ATOM_STATES * sizeof(gulong));
+
+    for (i = 0; i < ATOM_STATES; i++)
+        af->pos[i] = 0;
+
+    /* reserviert Speicher für die Atomlisten; wenn nicht genügend
        Speicher vorhanden ist, wird der Uniform-Modus aktiviert */
     af->atoms = (AtomInfo *) g_try_malloc(number * sizeof(AtomInfo));
     if (af->atoms == NULL) {
+        af->mask = NULL;
         af->uniform = TRUE;
         return af;
     }
@@ -62,13 +69,9 @@ AtomField *afield_new(gulong number, GtkWidget *darea)
         return af;
     }
 
-    af->pos = (gulong *) g_malloc(ATOM_STATES * sizeof(gulong));
-
     /* setzt den Status auf Null */
     for (i = 0; i < number; i++)
         (af->atoms + i)->state = 0;
-    for (i = 0; i < ATOM_STATES; i++)
-        af->pos[i] = 0;
 
     /* richtet die Atome aus */
     afield_arrange(af, darea);
@@ -96,11 +99,17 @@ void afield_reset(AtomField *af, gulong number)
     /* deaktiviert den Uniform-Modus */
     af->uniform = FALSE;
 
+    /* setzt den Status auf Null */
+    for (i = 0; i < ATOM_STATES; i++)
+        af->pos[i] = 0;
+
     /* passt den Speicherverbrauch an, wechselt bei zu wenig Speicher
        in den Uniform-Modus */
     af->atoms = (AtomInfo *) g_try_realloc(af->atoms,
                                            number * sizeof(AtomInfo));
     if (af->atoms == NULL) {
+        g_free(af->mask);
+        af->mask = NULL;
         af->uniform = TRUE;
         return;
     }
@@ -115,8 +124,6 @@ void afield_reset(AtomField *af, gulong number)
     /* setzt den Status auf Null */
     for (i = 0; i < number; i++)
         (af->atoms + i)->state = 0;
-    for (i = 0; i < ATOM_STATES; i++)
-        af->pos[i] = 0;
 }
 
 /* erstellt eine zufälle Maske für das Atomfeld */

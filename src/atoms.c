@@ -35,24 +35,24 @@
 
 /* die statische Liste der Atomnamen */
 static const gchar *atom_names[] = {
-    N_("mother"),
-    N_("doughter"),
-    N_("grandchild"),
-    N_("great-grandchild"),
-    N_("great-great-grandchild"),
-    N_("great-great-great-grandchild"),
-    N_("great-great-great-great-grandchild"),
-    N_("great-great-great-great-great-grandchild"),
-    N_("great-great-great-great-great-great-grandchild"),
-    N_("great-great-great-great-great-great-great-grandchild"),
-    N_("great-great-great-great-great-great-great-great-grandchild"),
-    N_("great-great-great-great-great-great-great-great-great-grandchild")
+    N_("Mother"),
+    N_("Doughter"),
+    N_("Grandchild"),
+    N_("Great-grandchild"),
+    N_("Great-great-grandchild"),
+    N_("Great-great-great-grandchild"),
+    N_("Great-great-great-great-grandchild"),
+    N_("Great-great-great-great-great-grandchild"),
+    N_("Great-great-great-great-great-great-grandchild"),
+    N_("Great-great-great-great-great-great-great-grandchild"),
+    N_("Great-great-great-great-great-great-great-great-grandchild"),
+    N_("Great-great-great-great-great-great-great-great-great-grandchild")
 };
 
 /* gibt den Namen des Atoms mit dem Status "state" zurück */
 G_CONST_RETURN gchar *atoms_get_name(gint state)
 {
-    return (state <= 9) ? atom_names[state] : N_("yet another offspring");
+    return (state <= 9) ? atom_names[state] : N_("Yet another offspring");
 }
 
 gdouble atoms_get_htime(gint state)

@@ -38,6 +38,7 @@ struct _MyTimer
     gdouble diff;
 
     gdouble speed;
+    gdouble speed_to_set;
     gdouble speed_offset;
     gdouble speed_diff;
     gdouble speed_set;

@@ -23,6 +23,7 @@
 #include "util.h"
 
 #include <gtk/gtk.h>
+#include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 #include <math.h>
@@ -30,7 +31,7 @@
 /* berechnet den Zweierlogarithmus von x */
 gdouble log2(gdouble x)
 {
-    return log(x) / log(2);
+    return log(x) / G_LN2;
 }
 
 /* setzt den Text eines Pango Layouts wie mit printf */
@@ -90,6 +91,43 @@ gboolean label_printf(GtkWidget *label, const gchar *format, ...)
     return TRUE;
 }
 
+/* schreibt eine UTF-8 Zeichenkette auf die Standardausgabe */
+gint printf_utf8(const gchar *format, ...)
+{
+    gchar *str_utf8, *str_locale;
+    const char *locale_charset;
+    va_list ap;
+    gsize len_utf8, len_locale;
+    gint retval;
+
+    va_start(ap, format);
+    str_utf8 = g_strdup_vprintf(format, ap);
+    va_end(ap);
+
+    len_utf8 = (gsize) strlen(str_utf8);
+
+    if (!g_get_charset(&locale_charset)) {
+        str_locale = g_convert_with_fallback(str_utf8, (gssize) len_utf8,
+                                             locale_charset, "UTF-8",
+                                             "_",
+                                             NULL, &len_locale, NULL);
+        g_free(str_utf8);
+    } else {
+        str_locale = str_utf8;
+        str_utf8 = NULL;
+        len_locale = len_utf8;
+    }
+
+    if (str_locale == NULL)
+        return -1;
+
+    retval = (gint) fwrite(str_locale, sizeof(gchar), len_locale, stdout);
+
+    g_free(str_locale);
+
+    return retval;
+}
+
 /* rechntet x hoch y */
 gint ipow(gint x, guint y)
 {
@@ -110,7 +148,7 @@ gdouble round_digits(gdouble x, guint digits)
 
     n = ipow(10, digits);
     x *= n;
-    x = ROUND(x, glong);
+    x = (gdouble) ROUND(x, glong);
     x /= n;
 
     return x;
@@ -153,7 +191,7 @@ gdouble fmax_n(gint n, gdouble *num)
     gdouble max;
 
     if (n <= 0)
-        return 0;
+        return 0.0;
 
     max = num[0];
 

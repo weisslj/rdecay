@@ -34,6 +34,7 @@
 #include "gui.h"
 
 #include <gtk/gtk.h>
+#include <stdio.h>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 #include <math.h>
@@ -64,7 +65,9 @@ static void get_sim_input(GtkWidget *top, SimData *data);
 static void resume_sim(GtkWidget *button, MyTimer *timer);
 static void pause_sim(GtkWidget *button, MyTimer *timer);
 static void stop_sim(GtkWidget *button, gint *leave);
-static void quit_sim(GtkWidget *button_quit, gint *leave);
+static gboolean quit_sim_window(GtkWidget *widget, GdkEvent *event,
+                                gint *leave);
+static void quit_sim_button(GtkWidget *widget, gint *leave);
 
 static void change_speed(GtkWidget *scale, MyTimer *timer);
 
@@ -170,7 +173,8 @@ void sim_decay(GtkWidget *button_start, SimData *sdata)
                          G_CALLBACK(afield_resize), sdata->afield);
     } else {
         afield_reset(sdata->afield, sdata->atoms[0]);
-        afield_arrange(sdata->afield, darea[0]);
+        if (!sdata->afield->uniform)
+            afield_arrange(sdata->afield, darea[0]);
     }
     if (!sdata->afield->uniform)
         afield_randomize(sdata->afield, sdata->rand);
@@ -366,21 +370,34 @@ void sim_decay(GtkWidget *button_start, SimData *sdata)
     /* ersetzt den Start-Button durch den Pause-Button */
     g_signal_handlers_block_by_func(G_OBJECT(button_start),
                                     (gpointer) sim_decay, sdata);
-    gtk_button_set_label(GTK_BUTTON(button_start), _("pause"));
+    gtk_button_set_label(GTK_BUTTON(button_start), _("Pause"));
     gtk_button_leave(GTK_BUTTON(button_start));
 
-    /* bereitet den Stop- und Beenden-Button vor */
+    /* bereitet den Stop-Button vor */
     leave = FALSE;
     gtk_widget_set_sensitive(button_stop, TRUE);
     g_signal_connect(G_OBJECT(button_stop), "clicked",
                      G_CALLBACK(stop_sim), &leave);
+
+    /* bereitet den Beenden-Button vor */
     g_signal_handlers_block_matched(G_OBJECT(button_quit),
                                     G_SIGNAL_MATCH_FUNC,
                                     0, 0, NULL,
                                     (gpointer) gtk_widget_destroy,
                                     NULL);
     g_signal_connect(G_OBJECT(button_quit), "clicked",
-                     G_CALLBACK(quit_sim), &leave);
+                     G_CALLBACK(quit_sim_button), &leave);
+
+    /* bereitet das Fenster auf das Beenden der Simulation vor */
+    g_signal_handlers_block_matched(G_OBJECT(top),
+                                    G_SIGNAL_MATCH_FUNC,
+                                    0, 0, NULL,
+                                    (gpointer) gui_delete,
+                                    NULL);
+    g_signal_connect(G_OBJECT(top),
+                     "delete_event",
+                     G_CALLBACK(quit_sim_window),
+                     &leave);
 
 
     /* wählt die reale Zerfallsfunktion aus */
@@ -550,7 +567,7 @@ void sim_decay(GtkWidget *button_start, SimData *sdata)
     g_signal_handlers_disconnect_matched(G_OBJECT(button_quit),
                                          G_SIGNAL_MATCH_FUNC,
                                          0, 0, NULL,
-                                         (gpointer) quit_sim,
+                                         (gpointer) quit_sim_button,
                                          NULL);
     g_signal_handlers_unblock_matched(G_OBJECT(button_quit),
                                       G_SIGNAL_MATCH_FUNC,
@@ -558,8 +575,20 @@ void sim_decay(GtkWidget *button_start, SimData *sdata)
                                       (gpointer) gtk_widget_destroy,
                                       NULL);
 
+    /* setzt das Fenster wieder zurück */
+    g_signal_handlers_disconnect_matched(G_OBJECT(top),
+                                         G_SIGNAL_MATCH_FUNC,
+                                         0, 0, NULL,
+                                         (gpointer) quit_sim_window,
+                                         NULL);
+    g_signal_handlers_unblock_matched(G_OBJECT(top),
+                                      G_SIGNAL_MATCH_FUNC,
+                                      0, 0, NULL,
+                                      (gpointer) gui_delete,
+                                      NULL);
+
     /* bereitet den Start-Button auf neue Simulation vor */
-    gtk_button_set_label(GTK_BUTTON(button_start), _("start"));
+    gtk_button_set_label(GTK_BUTTON(button_start), _("Start"));
     g_signal_handlers_unblock_by_func(G_OBJECT(button_start),
                                       (gpointer) sim_decay, sdata);
 
@@ -587,7 +616,7 @@ static void resume_sim(GtkWidget *button, MyTimer *timer)
                                          (gpointer) resume_sim, timer);
     g_signal_connect(G_OBJECT(button), "clicked",
                      G_CALLBACK(pause_sim), timer);
-    gtk_button_set_label(GTK_BUTTON(button), _("pause"));
+    gtk_button_set_label(GTK_BUTTON(button), _("Pause"));
 }
 
 /* pausiert die Simulation */
@@ -598,7 +627,7 @@ static void pause_sim(GtkWidget *button, MyTimer *timer)
         (gpointer) pause_sim, timer);
     g_signal_connect(G_OBJECT(button), "clicked",
         G_CALLBACK(resume_sim), timer);
-    gtk_button_set_label(GTK_BUTTON(button), _("resume"));
+    gtk_button_set_label(GTK_BUTTON(button), _("Resume"));
 }
 
 /* stoppt die Simulation */
@@ -608,10 +637,20 @@ static void stop_sim(GtkWidget *button_stop, gint *leave)
     *leave = SIM_STOP;
 }
 
-/* beendet die Simulation */
-static void quit_sim(GtkWidget *button_quit, gint *leave)
+/* beendet die Simulation (aufgerufen vom Fenster) */
+static gboolean quit_sim_window(GtkWidget *widget, GdkEvent *event,
+                                gint *leave)
 {
-    IGNORE(button_quit);
+    IGNORE(widget);
+    IGNORE(event);
+    *leave = SIM_QUIT;
+    return TRUE;
+}
+
+/* beendet die Simulation (aufgerufen vom Button) */
+static void quit_sim_button(GtkWidget *widget, gint *leave)
+{
+    IGNORE(widget);
     *leave = SIM_QUIT;
 }
 

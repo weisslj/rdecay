@@ -26,6 +26,7 @@
 #include "atoms.h"
 #include "gui.h"
 #include "random.h"
+#include "util.h"
 
 #include <stdlib.h>
 #include <locale.h>
@@ -52,6 +53,7 @@ int main(int argc, char *argv[])
     /* aktiviert Sprach- und Ländereinstellungen */
     gtk_set_locale();
     bindtextdomain(PACKAGE, LOCALEDIR);
+    bind_textdomain_codeset(PACKAGE, "UTF-8");
     textdomain(PACKAGE);
 
     if (arg_find(&argc, &argv, "--version", "-v")) {
@@ -102,26 +104,26 @@ int main(int argc, char *argv[])
 /* gibt die Version aus */
 static void print_version(void)
 {
-    printf("%s\n", PACKAGE_STRING);
-    printf(_("Written by Johannes Weißl.\n\n"));
-    printf(_("Copyright (C) 2004 Johannes Weißl\n\
-This is free software; see the source for copying conditions.  There\
+    printf_utf8("%s\n\n", PACKAGE_STRING);
+    printf_utf8(_("Copyright (C) 2004 Johannes Weißl\n\
+This is free software; see the source for copying conditions.  There \
 is NO\n\
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR\
-PURPOSE.\n"));
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR \
+PURPOSE.\n\n"));
+    printf_utf8(_("Written by Johannes Weißl.\n"));
 }
 
 /* gibt die Hilfe aus */
 static void print_help(void)
 {
-    printf(_("Usage: rdecay [OPTION]...\n"));
-    printf(_("Simulates the radioactive decay.\n\n"));
+    printf_utf8(_("Usage: rdecay [OPTION]...\n"));
+    printf_utf8(_("Simulates the radioactive decay.\n\n"));
 
-    printf(_("Arguments:\n"));
-    printf(_("      --fps NUMBER  set frames per second to NUMBER\n"));
-    printf(_("      --showfps     print fps to stdout\n"));
-    printf(_("  -h, --help        display this help and exit\n"));
-    printf(_("  -v, --version     output version information and exit\n"));
+    printf_utf8(_("Options:\n"));
+    printf_utf8(_("      --fps NUMBER  set frames per second to NUMBER\n"));
+    printf_utf8(_("      --showfps     print fps to stdout\n"));
+    printf_utf8(_("  -h, --help        display this help and exit\n"));
+    printf_utf8(_("  -v, --version     output version information and exit\n"));
 
-    printf(_("\nReport bugs to %s.\n"), PACKAGE_BUGREPORT);
+    printf_utf8(_("\nReport bugs to %s.\n"), PACKAGE_BUGREPORT);
 }

@@ -29,15 +29,18 @@
 #endif
 
 #ifndef OS_WINDOWS
-#include <sys/time.h>
-#include <time.h>
-#include <errno.h>
+# ifdef TIME_WITH_SYS_TIME
+#  include <sys/time.h>
+#  include <time.h>
+# else
+#  ifdef HAVE_SYS_TIME_H
+#   include <sys/time.h>
+#  else
+#   include <time.h>
+#  endif
+# endif
 #else
-#include <windows.h>
-#endif
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
+# include <windows.h>
 #endif
 
 #ifdef OS_WINDOWS
@@ -60,11 +63,11 @@ MyTimer* timer_new(gdouble speed)
     timer->active = TRUE;
     timer->speed = speed;
 
-    timer->delay = 0;
-    timer->speed_offset = 0;
-    timer->speed_set = 0;
-    timer->speed_set_changed = 0;
-    timer->speed_diff = 0;
+    timer->delay = 0.0;
+    timer->speed_offset = 0.0;
+    timer->speed_set = 0.0;
+    timer->speed_set_changed = 0.0;
+    timer->speed_diff = 0.0;
 
     PREPARE_TIMEVAL(tval);
     timer->start = timer->diff = GET_TIME(tval);
@@ -83,12 +86,19 @@ void timer_start(MyTimer *timer)
 {
     TIMEVAL tval;
 
+    if (timer->active)
+        return;
+
+    timer->active = TRUE;
+
     PREPARE_TIMEVAL(tval);
     timer->delay += GET_TIME(tval) - timer->stop;
 
     timer->diff = timer->start + timer->delay;
 
-    timer->active = TRUE;
+    /* NEW */
+    timer_set_speed(timer, timer->speed_to_set);
+
 }
 
 /* stoppt den Timer */
@@ -96,8 +106,14 @@ void timer_stop(MyTimer *timer)
 {
     TIMEVAL tval;
 
+    if (!timer->active)
+        return;
+
     PREPARE_TIMEVAL(tval);
     timer->stop = GET_TIME(tval);
+
+    /* NEW */
+    timer->speed_to_set = timer->speed;
 
     timer->active = FALSE;
 }
@@ -139,6 +155,11 @@ void timer_set_speed(MyTimer *timer, gdouble speed)
     gdouble curr, curr_changed;
     TIMEVAL tval;
 
+    if (!timer->active) {
+        timer->speed_to_set = speed;
+        return;
+    }
+
     PREPARE_TIMEVAL(tval);
     curr = GET_TIME(tval) - timer->diff;
 
@@ -148,6 +169,7 @@ void timer_set_speed(MyTimer *timer, gdouble speed)
 
     timer->speed_set = curr;
     timer->speed_set_changed = curr_changed;
+
     timer->speed = speed;
 
     timer->speed_diff = timer->speed_set - timer->speed * timer->speed_set +

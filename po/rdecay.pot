@@ -8,132 +8,181 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-02-13 14:58+0100\n"
+"POT-Creation-Date: 2004-03-16 18:14+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/gui.c:93
-msgid "simulation of radioactive decay"
+#: src/gui.c:90
+msgid "Simulation of radioactive decay"
 msgstr ""
 
-#: src/gui.c:290
-msgid "time: "
+#: src/gui.c:293
+msgid "Time: "
 msgstr ""
 
-#: src/gui.c:362
-msgid "generations: "
+#: src/gui.c:365
+msgid "Generations: "
 msgstr ""
 
-#: src/gui.c:376
-msgid "atoms: "
+#: src/gui.c:379
+msgid "Atoms: "
 msgstr ""
 
-#: src/gui.c:387
+#: src/gui.c:390
 #, c-format
-msgid "half-life %s"
+msgid "Half-life %s"
 msgstr ""
 
-#: src/gui.c:475
-msgid "number"
+#: src/gui.c:478
+msgid "Number"
 msgstr ""
 
-#: src/gui.c:480
-msgid "activity"
+#: src/gui.c:483
+msgid "Activity"
 msgstr ""
 
-#: src/gui.c:499
+#: src/gui.c:502
 msgid "real"
 msgstr ""
 
-#: src/gui.c:503
+#: src/gui.c:506
 msgid "stat."
 msgstr ""
 
-#: src/gui.c:507
+#: src/gui.c:510
 msgid "step"
 msgstr ""
 
-#: src/gui.c:525
+#: src/gui.c:528
 #, c-format
-msgid "%s atoms"
+msgid "%s"
 msgstr ""
 
-#: src/gui.c:570 src/sim.c:562
-msgid "start"
-msgstr ""
-
-#: src/gui.c:573
-msgid "stop"
+#: src/gui.c:573 src/sim.c:591
+msgid "Start"
 msgstr ""
 
 #: src/gui.c:576
-msgid "quit"
+msgid "Stop"
 msgstr ""
 
 #: src/gui.c:579
-msgid "speed"
+msgid "Quit"
 msgstr ""
 
-#: src/sim.c:369 src/sim.c:590
-msgid "pause"
+#: src/gui.c:582
+msgid "Speed"
 msgstr ""
 
-#: src/sim.c:601
-msgid "resume"
+#: src/sim.c:373 src/sim.c:619
+msgid "Pause"
+msgstr ""
+
+#: src/sim.c:630
+msgid "Resume"
 msgstr ""
 
 #: src/atoms.c:38
-msgid "mother"
+msgid "Mother"
 msgstr ""
 
 #: src/atoms.c:39
-msgid "doughter"
+msgid "Doughter"
 msgstr ""
 
 #: src/atoms.c:40
-msgid "grandchild"
+msgid "Grandchild"
 msgstr ""
 
 #: src/atoms.c:41
-msgid "great-grandchild"
+msgid "Great-grandchild"
 msgstr ""
 
 #: src/atoms.c:42
-msgid "great-great-grandchild"
+msgid "Great-great-grandchild"
 msgstr ""
 
 #: src/atoms.c:43
-msgid "great-great-great-grandchild"
+msgid "Great-great-great-grandchild"
 msgstr ""
 
 #: src/atoms.c:44
-msgid "great-great-great-great-grandchild"
+msgid "Great-great-great-great-grandchild"
 msgstr ""
 
 #: src/atoms.c:45
-msgid "great-great-great-great-great-grandchild"
+msgid "Great-great-great-great-great-grandchild"
 msgstr ""
 
 #: src/atoms.c:46
-msgid "great-great-great-great-great-great-grandchild"
+msgid "Great-great-great-great-great-great-grandchild"
 msgstr ""
 
 #: src/atoms.c:47
-msgid "great-great-great-great-great-great-great-grandchild"
+msgid "Great-great-great-great-great-great-great-grandchild"
 msgstr ""
 
 #: src/atoms.c:48
-msgid "great-great-great-great-great-great-great-great-grandchild"
+msgid "Great-great-great-great-great-great-great-great-grandchild"
 msgstr ""
 
 #: src/atoms.c:49
-msgid "great-great-great-great-great-great-great-great-great-grandchild"
+msgid "Great-great-great-great-great-great-great-great-great-grandchild"
 msgstr ""
 
 #: src/atoms.c:55
-msgid "yet another offspring"
+msgid "Yet another offspring"
+msgstr ""
+
+#: src/main.c:108
+msgid ""
+"Copyright (C) 2004 Johannes Weißl\n"
+"This is free software; see the source for copying conditions.  There is NO\n"
+"warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
+"\n"
+msgstr ""
+
+#: src/main.c:113
+msgid "Written by Johannes Weißl.\n"
+msgstr ""
+
+#: src/main.c:119
+msgid "Usage: rdecay [OPTION]...\n"
+msgstr ""
+
+#: src/main.c:120
+msgid ""
+"Simulates the radioactive decay.\n"
+"\n"
+msgstr ""
+
+#: src/main.c:122
+msgid "Options:\n"
+msgstr ""
+
+#: src/main.c:123
+msgid "      --fps NUMBER  set frames per second to NUMBER\n"
+msgstr ""
+
+#: src/main.c:124
+msgid "      --showfps     print fps to stdout\n"
+msgstr ""
+
+#: src/main.c:125
+msgid "  -h, --help        display this help and exit\n"
+msgstr ""
+
+#: src/main.c:126
+msgid "  -v, --version     output version information and exit\n"
+msgstr ""
+
+#: src/main.c:128
+#, c-format
+msgid ""
+"\n"
+"Report bugs to %s.\n"
 msgstr ""
