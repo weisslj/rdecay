@@ -1,0 +1,72 @@
+#!/usr/bin/env python
+
+import math
+import random
+import time
+import sys
+
+devurandom = open("/dev/urandom")
+random.seed(devurandom.readline())
+
+class Frame:
+
+    def __init__(self):
+        self.cur = time.time()
+        self.prev = time.time()
+        self.scale = 0.001
+
+    def update(self):
+        self.prev = self.cur
+        self.cur = time.time()
+        self.scale = self.cur-self.prev
+
+    def __str__(self):
+        return str(1.0/self.scale)
+
+class Display:
+
+    def __init__(self):
+        self.objects = []
+
+    def add_object(self, object):
+        self.objects.append(object)
+
+    def update(self):
+        for object in self.objects:
+            if object.updated:
+                print object
+                object.updated = False
+
+class Experiment:
+
+    def __init__(self, n, T):
+        self.N = n
+        self.n = n
+        self.T = T
+        self.updated = True
+        self.time = time.time()
+
+    def update(self, t):
+        rate = math.e**(-math.log(2)*t/self.T)
+        mu = rate*self.n
+        sigma = (rate*(1-rate)*self.n)**rate
+        n = int(random.normalvariate(mu, sigma)+0.5)
+        if self.n > n:
+            self.n = n
+            self.updated = True
+
+    def __str__(self):
+        return "no. of atoms: " + str(self.n) + "\ttime: " + str(time.time()-self.time)
+
+n = 1000
+
+frame = Frame()
+display = Display()
+exp = Experiment(1000, 3) 
+display.add_object(exp)
+
+while True:
+    display.update()
+    exp.update(frame.scale)
+    frame.update()
+    random.seed(devurandom.readline())

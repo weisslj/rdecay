@@ -1,0 +1,7 @@
+struct {
+    int state;
+    int x;
+    int y;
+} atom;
+
+Atom *at;

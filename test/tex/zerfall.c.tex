@@ -1,0 +1,311 @@
+\documentstyle[a4]{article}
+\begin{document}
+
+\ifx\sevenrm\undefined
+  \font\sevenrm=cmr7 scaled \magstep0
+\fi
+
+\newread\MyStyle
+\openin\MyStyle=src2latex.s2t
+\ifeof\MyStyle
+  \closein\MyStyle
+\else
+  \input src2latex.s2t
+  \closein\MyStyle
+\fi
+
+\ifx\gtfam\undefined
+  \ifx\dm\undefined
+    \ifx\tendm\undefined
+      \def\mc{\null}
+    \else
+      \def\mc{\tendm}
+    \fi
+  \else
+    \def\mc{\dm}
+  \fi
+  \ifx\dg\undefined
+    \ifx\tendg\undefined
+      \def\gt{\null}
+    \else
+      \def\gt{\tendg}
+    \fi
+  \else
+    \def\gt{\dg}
+  \fi
+\fi
+\ifx\sc\undefined
+  \def\sc{\null}
+\fi
+
+\tt\mc 
+
+\noindent
+{\tt\#}include{\tt\mc \kern0.500em}{\tt <}stdio.h{\tt >}
+
+\noindent
+{}{\tt\#}include{\tt\mc \kern0.500em}{\tt <}glib.h{\tt >}
+
+\noindent
+{}\hfill
+
+\noindent
+{}{\tt\#}define{\tt\mc \kern0.500em}ATOM{\tt\_\kern.141em}STATES{\tt\mc \kern0.500em}3
+
+\noindent
+{}\hfill
+
+\noindent
+{}typedef{\tt\mc \kern0.500em}struct{\tt\mc \kern0.500em}{\tt\_\kern.141em}AtomList{\tt\mc \kern0.500em}{\tt\char'173}
+
+\noindent
+{}{\tt\mc \kern2.000em}gint8{\tt\mc \kern0.500em}state;
+
+\noindent
+{}{\tt\mc \kern2.000em}gdouble{\tt\mc \kern0.500em}x;
+
+\noindent
+{}{\tt\mc \kern2.000em}gdouble{\tt\mc \kern0.500em}y;
+
+\noindent
+{}{\tt\char'175}{\tt\mc \kern0.500em}AtomList;
+
+\noindent
+{}\hfill
+
+\noindent
+{}typedef{\tt\mc \kern0.500em}struct{\tt\mc \kern0.500em}{\tt\_\kern.141em}Atoms{\tt\mc \kern0.500em}{\tt\char'173}
+
+\noindent
+{}{\tt\mc \kern2.000em}gint32{\tt\mc \kern0.500em}number;
+
+\noindent
+{}{\tt\mc \kern2.000em}gint32{\tt\mc \kern0.500em}states[ATOM{\tt\_\kern.141em}STATES];
+
+\noindent
+{}{\tt\mc \kern2.000em}gdouble{\tt\mc \kern0.500em}wide;
+
+\noindent
+{}{\tt\mc \kern2.000em}AtomList{\tt\mc \kern0.500em}{\tt *}list;
+
+\noindent
+{}{\tt\char'175}{\tt\mc \kern0.500em}Atoms;
+
+\noindent
+{}\hfill
+
+\noindent
+{}Atoms{\tt\mc \kern0.500em}{\tt *}create{\tt\_\kern.141em}atoms(gint32{\tt\mc \kern0.500em}number)
+
+\noindent
+{}{\tt\char'173}
+
+\noindent
+{}{\tt\mc \kern2.000em}Atoms{\tt\mc \kern0.500em}{\tt *}atoms;
+
+\noindent
+{}\hfill
+
+\noindent
+{}{\tt\mc \kern2.000em}atoms{\tt\mc \kern0.500em}={\tt\mc \kern0.500em}(Atoms{\tt\mc \kern0.500em}{\tt *}){\tt\mc \kern0.500em}g{\tt\_\kern.141em}malloc(sizeof(Atoms));
+
+\noindent
+{}{\tt\mc \kern2.000em}atoms{\tt -}{\tt >}list{\tt\mc \kern0.500em}={\tt\mc \kern0.500em}(AtomList{\tt\mc \kern0.500em}{\tt *}){\tt\mc \kern0.500em}g{\tt\_\kern.141em}malloc(number{\tt\mc \kern0.500em}{\tt *}{\tt\mc \kern0.500em}sizeof(AtomList));
+
+\noindent
+{}\hfill
+
+\noindent
+{}{\tt\mc \kern2.000em}atoms{\tt -}{\tt >}number{\tt\mc \kern0.500em}={\tt\mc \kern0.500em}number;
+
+\noindent
+{}{\tt\mc \kern2.000em}atoms{\tt -}{\tt >}states[0]{\tt\mc \kern0.500em}={\tt\mc \kern0.500em}number;
+
+\noindent
+{}{\tt\mc \kern2.000em}atoms{\tt -}{\tt >}states[1]{\tt\mc \kern0.500em}={\tt\mc \kern0.500em}0;
+
+\noindent
+{}{\tt\mc \kern2.000em}atoms{\tt -}{\tt >}states[2]{\tt\mc \kern0.500em}={\tt\mc \kern0.500em}0;
+
+\noindent
+{}\hfill
+
+\noindent
+{}{\tt\mc \kern2.000em}return{\tt\mc \kern0.500em}atoms;
+
+\noindent
+{}{\tt\char'175}
+
+\noindent
+{}\hfill
+
+\noindent
+{}void{\tt\mc \kern0.500em}destroy{\tt\_\kern.141em}atoms(Atoms{\tt\mc \kern0.500em}{\tt *}atoms)
+
+\noindent
+{}{\tt\char'173}
+
+\noindent
+{}{\tt\mc \kern2.000em}g{\tt\_\kern.141em}free(atoms{\tt -}{\tt >}list);
+
+\noindent
+{}{\tt\mc \kern2.000em}g{\tt\_\kern.141em}free(atoms);
+
+\noindent
+{}{\tt\char'175}
+
+\noindent
+{}\hfill
+
+\newpage
+
+\noindent
+{}gint{\tt\mc \kern0.500em}main(gint{\tt\mc \kern0.500em}argc,{\tt\mc \kern0.500em}gchar{\tt\mc \kern0.500em}{\tt *}argv[])
+
+\noindent
+{}{\tt\char'173}
+
+\noindent
+{}{\tt\mc \kern2.000em}GRand{\tt\mc \kern0.500em}{\tt *}rand;
+
+\noindent
+{}{\tt\mc \kern2.000em}GTimer{\tt\mc \kern0.500em}{\tt *}timer;
+
+\noindent
+{}{\tt\mc \kern2.000em}gdouble{\tt\mc \kern0.500em}halftime,{\tt\mc \kern0.500em}ctime,{\tt\mc \kern0.500em}waittime;
+
+\noindent
+{}{\tt\mc \kern2.000em}gint32{\tt\mc \kern0.500em}number,{\tt\mc \kern0.500em}i;
+
+\noindent
+{}{\tt\mc \kern2.000em}Atoms{\tt\mc \kern0.500em}{\tt *}atoms;
+
+\noindent
+{}\hfill
+
+\noindent
+{}{\tt\mc \kern2.000em}ctime{\tt\mc \kern0.500em}={\tt\mc \kern0.500em}waittime{\tt\mc \kern0.500em}={\tt\mc \kern0.500em}0;
+
+\noindent
+{}\hfill
+
+\noindent
+{}{\tt\mc \kern2.000em}if{\tt\mc \kern0.500em}(argc{\tt\mc \kern0.500em}!={\tt\mc \kern0.500em}3){\tt\mc \kern0.500em}{\tt\char'173}
+
+\noindent
+{}{\tt\mc \kern4.000em}printf({\tt "}Usage:{\tt\mc \kern0.500em}{\tt\%}s{\tt\mc \kern0.500em}NUMBER{\tt\mc \kern0.500em}HALFTIME{\tt\char92}n{\tt "},{\tt\mc \kern0.500em}argv[0]);
+
+\noindent
+{}{\tt\mc \kern4.000em}exit(1);
+
+\noindent
+{}{\tt\mc \kern2.000em}{\tt\char'175}
+
+\noindent
+{}\hfill
+
+\noindent
+{}{\tt\mc \kern2.000em}number{\tt\mc \kern0.500em}={\tt\mc \kern0.500em}(gint32){\tt\mc \kern0.500em}g{\tt\_\kern.141em}ascii{\tt\_\kern.141em}strtod(argv[1],{\tt\mc \kern0.500em}NULL);
+
+\noindent
+{}{\tt\mc \kern2.000em}halftime{\tt\mc \kern0.500em}={\tt\mc \kern0.500em}g{\tt\_\kern.141em}ascii{\tt\_\kern.141em}strtod(argv[2],{\tt\mc \kern0.500em}NULL);
+
+\noindent
+{}\hfill
+
+\noindent
+{}{\tt\mc \kern2.000em}atoms{\tt\mc \kern0.500em}={\tt\mc \kern0.500em}create{\tt\_\kern.141em}atoms(number);
+
+\noindent
+{}\hfill
+
+\noindent
+{}{\tt\mc \kern2.000em}rand{\tt\mc \kern0.500em}={\tt\mc \kern0.500em}g{\tt\_\kern.141em}rand{\tt\_\kern.141em}new();
+
+\noindent
+{}{\tt\mc \kern2.000em}timer{\tt\mc \kern0.500em}={\tt\mc \kern0.500em}g{\tt\_\kern.141em}timer{\tt\_\kern.141em}new();
+
+\noindent
+{}\hfill
+
+\noindent
+{}{\tt\mc \kern2.000em}while{\tt\mc \kern0.500em}(atoms{\tt -}{\tt >}states[0]{\tt\mc \kern0.500em}{\tt >}{\tt\mc \kern0.500em}0){\tt\mc \kern0.500em}{\tt\char'173}
+
+\noindent
+{}{\tt\mc \kern4.000em}ctime{\tt\mc \kern0.500em}={\tt\mc \kern0.500em}g{\tt\_\kern.141em}timer{\tt\_\kern.141em}elapsed(timer,{\tt\mc \kern0.500em}NULL);
+
+\noindent
+{}\hfill
+
+\noindent
+{}{\tt\mc \kern4.000em}for{\tt\mc \kern0.500em}(i{\tt\mc \kern0.500em}={\tt\mc \kern0.500em}atoms{\tt -}{\tt >}states[0];{\tt\mc \kern0.500em}i{\tt\mc \kern0.500em}{\tt >}{\tt\mc \kern0.500em}0;{\tt\mc \kern0.500em}i{\tt -}{\tt -}){\tt\mc \kern0.500em}{\tt\char'173}
+
+\noindent
+{}{\tt\mc \kern6.000em}if{\tt\mc \kern0.500em}(g{\tt\_\kern.141em}rand{\tt\_\kern.141em}boolean(rand)){\tt\mc \kern0.500em}{\tt\char'173}
+
+\noindent
+{}{\tt\mc \kern8.000em}atoms{\tt -}{\tt >}states[0]{\tt -}{\tt -};
+
+\noindent
+{}{\tt\mc \kern8.000em}atoms{\tt -}{\tt >}states[1]++;
+
+\noindent
+{}{\tt\mc \kern6.000em}{\tt\char'175}
+
+\noindent
+{}{\tt\mc \kern4.000em}{\tt\char'175}
+
+\noindent
+{}\hfill
+
+\noindent
+{}{\tt\mc \kern4.000em}waittime{\tt\mc \kern0.500em}={\tt\mc \kern0.500em}halftime{\tt\mc \kern0.500em}{\tt -}{\tt\mc \kern0.500em}(g{\tt\_\kern.141em}timer{\tt\_\kern.141em}elapsed(timer,{\tt\mc \kern0.500em}NULL){\tt\mc \kern0.500em}{\tt -}{\tt\mc \kern0.500em}ctime);
+
+\noindent
+{}{\tt\mc \kern4.000em}if{\tt\mc \kern0.500em}(waittime{\tt\mc \kern0.500em}{\tt >}{\tt\mc \kern0.500em}0)
+
+\noindent
+{}{\tt\mc \kern6.000em}g{\tt\_\kern.141em}usleep((gulong){\tt\mc \kern0.500em}(waittime{\tt\mc \kern0.500em}+{\tt\mc \kern0.500em}0.5){\tt\mc \kern0.500em}{\tt *}{\tt\mc \kern0.500em}G{\tt\_\kern.141em}USEC{\tt\_\kern.141em}PER{\tt\_\kern.141em}SEC);
+
+\noindent
+{}{\tt\mc \kern4.000em}else
+
+\noindent
+{}{\tt\mc \kern6.000em}printf({\tt "}WARNING:{\tt\mc \kern0.500em}your{\tt\mc \kern0.500em}computer{\tt\mc \kern0.500em}is{\tt\mc \kern0.500em}to{\tt\mc \kern0.500em}SLOOOOW{\tt\mc \kern0.500em}to{\tt\mc \kern0.500em}compute{\tt\mc \kern0.500em}this!{\tt\char92}n{\tt "});
+
+\noindent
+{}{\tt\mc \kern2.000em}{\tt\char'175}
+
+\noindent
+{}\hfill
+
+\noindent
+{}{\tt\mc \kern2.000em}g{\tt\_\kern.141em}timer{\tt\_\kern.141em}stop(timer);
+
+\noindent
+{}{\tt\mc \kern2.000em}g{\tt\_\kern.141em}timer{\tt\_\kern.141em}destroy(timer);
+
+\noindent
+{}\hfill
+
+\noindent
+{}{\tt\mc \kern2.000em}g{\tt\_\kern.141em}rand{\tt\_\kern.141em}free(rand);
+
+\noindent
+{}\hfill
+
+\noindent
+{}{\tt\mc \kern2.000em}destroy{\tt\_\kern.141em}atoms(atoms);
+
+\noindent
+{}{\tt\mc \kern2.000em}return{\tt\mc \kern0.500em}0;
+
+\noindent
+{}{\tt\char'175}
+
+\noindent
+{}
+
+\rm\mc
+
+\end{document}
