@@ -1,2 +1,17 @@
-Read INSTALL if you want to know how to build and install rdecay.
-Refer to the manpage for command-line options.
+----------
+| rdecay |
+----------
+
+This is a school final year project. It is a GTK program that simulates
+radioactive decay.
+
+------------------------
+| Installation         |
+------------------------
+
+You need GTK+ and GNU GSL libraries. The code compiled successfully on
+Windows XP and GNU/Linux. To build and install, run:
+
+./configure --prefix=/where/to/install
+make
+make install

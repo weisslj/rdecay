@@ -1,11 +1,11 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.57)
-AC_INIT(rdecay, 1.1.0, jargon@molb.org)
+AC_PREREQ(2.61)
+AC_INIT(rdecay, 1.1.1, jargon@molb.org)
 AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_HEADER([config.h])
-AM_INIT_AUTOMAKE(rdecay, 1.1.0)
+AM_INIT_AUTOMAKE
 
 AC_CANONICAL_HOST
 case $host_os in
@@ -23,17 +23,19 @@ case $host_os in
 esac
 
 # Checks for programs.
+AC_USE_SYSTEM_EXTENSIONS
 AC_PROG_CC
 if test "$GCC" = yes ; then
     if test "$platform" = "windows" ; then
         WARN_FLAGS=""
     else
-        WARN_FLAGS="-ansi -pedantic -W -Wall"
+        WARN_FLAGS="-W -Wall"
     fi
 fi
 AC_SUBST(WARN_FLAGS)
 AC_PROG_INSTALL
 AM_GNU_GETTEXT
+AM_GNU_GETTEXT_VERSION(0.18.1)
 
 # Checks for libraries.
 PKG_CHECK_MODULES(GTK, gtk+-2.0)

@@ -1,3 +1,11 @@
+2010-07-07  Johannes Weißl  <jargon@molb.org>
+
+	* updated autotools files
+
+2004-05-24  Johannes Weißl  <jargon@molb.org>
+
+	* configure.ac: AM_INIT_AUTOMAKE without options
+
 2004-04-05  Johannes Weißl  <jargon@molb.org>
 
 	* gui.c: use of GtkComboBox instead of GtkOptionMenu

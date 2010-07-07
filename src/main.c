@@ -105,12 +105,12 @@ int main(int argc, char *argv[])
 static void print_version(void)
 {
     printf_utf8("%s\n\n", PACKAGE_STRING);
-    printf_utf8(_("Copyright (C) 2004 Johannes Weißl\n\
+    printf_utf8(_("Copyright (C) 2004 Johannes Weissl\n\
 This is free software; see the source for copying conditions.  There \
 is NO\n\
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR \
 PURPOSE.\n\n"));
-    printf_utf8(_("Written by Johannes Weißl.\n"));
+    printf_utf8(_("Written by Johannes Weissl.\n"));
 }
 
 /* gibt die Hilfe aus */

@@ -1,3 +1,6 @@
+rdecay 1.1.1 - 2010-07-07
+* updated autotools files
+
 rdecay 1.1.0 - 2004-04-05
 * uses gtk 2.4
 * bugfixes
