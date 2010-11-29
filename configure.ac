@@ -114,7 +114,6 @@ fi
 AC_CONFIG_FILES([Makefile
                  intl/Makefile
                  po/Makefile.in
-                 m4/Makefile 
                  lib/Makefile
                  src/Makefile
                  doc/Makefile
