@@ -1,1 +1,4 @@
 Johannes Weißl is the original author and current maintainer for rdecay.
+
+Felix Wallner is the author of the probabilistic time-dependant decay function,
+see contrib/binom.c and sim.c
