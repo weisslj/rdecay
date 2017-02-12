@@ -1,7 +1,7 @@
 /* 
  * sim.c - die Simulation des Zerfalls
  *
- * Copyright 2004-2017 Johannes Weißl
+ * Copyright (C) 2004-2017 Johannes Weißl
  *
  * This file is part of rdecay.
  *
@@ -721,7 +721,7 @@ static gdouble decay_stat_math_is_too_complicated(gdouble t, SimData *data)
 /* berechnet über die Binomial-Verteilung, wieviele von den n Atomen
    mit der Halbwertszeit thalf im Zeitraum t zerfallen
 
-   Copyright 2004 Felix Wallner, aus contrib/binom.c
+   Copyright (C) 2004 Felix Wallner, aus contrib/binom.c
 */
 static gint decay_binomial(gdouble t, gulong n,
                            gdouble thalf, gsl_rng *rand)

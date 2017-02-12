@@ -1,7 +1,7 @@
 /* 
  * status.h - die Statusanzeige
  *
- * Copyright 2004-2017 Johannes Weißl
+ * Copyright (C) 2004-2017 Johannes Weißl
  *
  * This file is part of rdecay.
  *
