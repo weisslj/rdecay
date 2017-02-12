@@ -20,5 +20,5 @@ rdecay_SOURCES = \
 
 localedir = $(datadir)/locale
 AM_CFLAGS = -DLOCALEDIR=\"$(localedir)\" @WARN_FLAGS@ @GTK_CFLAGS@ @GSL_CFLAGS@
-INCLUDES = -I../lib
+AM_CPPFLAGS = -I../lib
 LIBS = @LIBINTL@ @LIBS@ @GTK_LIBS@ @GSL_LIBS@
