@@ -1,7 +1,7 @@
 /* 
  * sim.h - die Simulation des Zerfalls
  *
- * Copyright 2004 Johannes Weißl
+ * Copyright 2004-2017 Johannes Weißl
  *
  * This file is part of rdecay.
  *

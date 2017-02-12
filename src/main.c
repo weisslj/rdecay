@@ -1,7 +1,7 @@
 /* 
  * main.c - die Hauptdatei
  *
- * Copyright 2004 Johannes Weißl
+ * Copyright 2004-2017 Johannes Weißl
  *
  * This file is part of rdecay.
  *
@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 static void print_version(void)
 {
     printf_utf8("%s\n\n", PACKAGE_STRING);
-    printf_utf8(_("Copyright (C) 2004 Johannes Weissl\n\
+    printf_utf8(_("Copyright (C) 2004-2017 Johannes Weissl\n\
 This is free software; see the source for copying conditions.  There \
 is NO\n\
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR \
