@@ -166,7 +166,7 @@ void afield_randomize(AtomField *af, gsl_rng *rand)
 /* ordnet die Atome im Atomfeld an */
 void afield_arrange(AtomField *af, GtkWidget *darea)
 {
-    gdouble n_root, f_aspect, rows_raw, cols_raw;
+    gdouble f_aspect, rows_raw, cols_raw;
     gint wide_cols, wide_rows, wide, padding, rows, cols, row, col;
     gulong i;
 
@@ -183,7 +183,6 @@ void afield_arrange(AtomField *af, GtkWidget *darea)
     }
 
     /* suchst eine optimale Reihen-Spalten Verteilung */
-    n_root = sqrt(af->number);
     f_aspect = (gdouble) darea->allocation.width / darea->allocation.height;
 
     rows_raw = sqrt((gdouble) af->number * f_aspect);
