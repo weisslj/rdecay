@@ -3,5 +3,5 @@ compiler:
 - clang
 - gcc
 before_install:
-- sudo apt-get install -qq libgtk2.0-dev libgsl0-dev
+- sudo apt-get install -qq autopoint libgtk2.0-dev libgsl0-dev
 script: ./bootstrap.sh && ./configure && make
