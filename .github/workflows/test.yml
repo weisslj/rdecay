@@ -1,0 +1,11 @@
+name: Test
+on:
+  push:
+  schedule:
+    - cron: '0 0 1 * *'  # monthly
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: ./bootstrap.sh && ./configure && make
