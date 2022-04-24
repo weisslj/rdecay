@@ -18,6 +18,9 @@ jobs:
       - run: ./bootstrap.sh && ./configure && make
   windows:
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
     steps:
       - uses: msys2/setup-msys2@v2
       - uses: actions/checkout@v3
