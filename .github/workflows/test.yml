@@ -13,6 +13,7 @@ jobs:
   macos:
     runs-on: macos-latest
     steps:
+      - run: brew install automake
       - uses: actions/checkout@v3
       - run: ./bootstrap.sh && ./configure && make
   windows:
