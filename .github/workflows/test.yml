@@ -7,6 +7,6 @@ jobs:
   linux:
     runs-on: ubuntu-latest
     steps:
-      - run: sudo apt-get install autopoint libgtk2.0-dev libgsl0-dev
+      - run: sudo apt-get install autopoint libgtk2.0-dev libgsl-dev
       - uses: actions/checkout@v3
       - run: ./bootstrap.sh && ./configure && make
