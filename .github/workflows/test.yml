@@ -24,7 +24,6 @@ jobs:
     steps:
       - uses: msys2/setup-msys2@v2
         with:
-          install: autotools gettext-devel gcc mingw-w64-x86_64-gtk2
+          install: autotools gettext-devel gcc ${{ MINGW_PACKAGE_PREFIX }}-gtk2 ${{ MINGW_PACKAGE_PREFIX }}-gsl
       - uses: actions/checkout@v3
-      - run: printenv
       - run: ./bootstrap.sh && ./configure && make
