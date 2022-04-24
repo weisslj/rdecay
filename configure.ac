@@ -41,7 +41,7 @@ AM_GNU_GETTEXT_VERSION([0.19])
 # Checks for libraries.
 PKG_CHECK_MODULES([GTK], [gtk+-2.0])
 if test "$platform" = "windows" ; then
-        GTK_CFLAGS="$GTK_CFLAGS -mms-bitfields -mno-cygwin -mwindows"
+        GTK_CFLAGS="$GTK_CFLAGS -mms-bitfields -mwindows"
 fi
 
 PKG_CHECK_MODULES([GSL], [gsl])
