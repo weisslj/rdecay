@@ -23,5 +23,7 @@ jobs:
         shell: msys2 {0}
     steps:
       - uses: msys2/setup-msys2@v2
+        with:
+          install: autotools
       - uses: actions/checkout@v3
       - run: ./bootstrap.sh && ./configure && make
