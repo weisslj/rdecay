@@ -13,7 +13,7 @@ jobs:
   macos:
     runs-on: macos-latest
     steps:
-      - run: brew install automake gtk
+      - run: brew install automake gtk+
       - uses: actions/checkout@v3
       - run: ./bootstrap.sh && ./configure && make
   windows:
