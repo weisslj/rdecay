@@ -35,8 +35,8 @@ if test "$GCC" = yes ; then
 fi
 AC_SUBST([WARN_FLAGS])
 AC_PROG_INSTALL
-AM_GNU_GETTEXT
-AM_GNU_GETTEXT_VERSION([0.19])
+AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION([0.21])
 
 # Checks for libraries.
 PKG_CHECK_MODULES([GTK], [gtk+-2.0])
@@ -113,7 +113,6 @@ else
 fi
 
 AC_CONFIG_FILES([Makefile
-                 intl/Makefile
                  po/Makefile.in
                  lib/Makefile
                  src/Makefile
