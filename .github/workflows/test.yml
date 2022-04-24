@@ -24,6 +24,7 @@ jobs:
     steps:
       - uses: msys2/setup-msys2@v2
         with:
-          install: autotools gettext-devel gcc ${{ MINGW_PACKAGE_PREFIX }}-gtk2 ${{ MINGW_PACKAGE_PREFIX }}-gsl
+          install: autotools gettext-devel gcc
+          pacboy: gtk2 gsl
       - uses: actions/checkout@v3
       - run: ./bootstrap.sh && ./configure && make
