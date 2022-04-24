@@ -10,3 +10,13 @@ jobs:
       - run: sudo apt-get install autopoint libgtk2.0-dev
       - uses: actions/checkout@v3
       - run: ./bootstrap.sh && ./configure && make
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: ./bootstrap.sh && ./configure && make
+  windows:
+    runs-on: windows-latest
+		steps:
+      - uses: msys2/setup-msys2@v2
+      - run: ./bootstrap.sh && ./configure && make
