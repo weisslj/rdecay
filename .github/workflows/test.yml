@@ -25,6 +25,6 @@ jobs:
       - uses: msys2/setup-msys2@v2
         with:
           install: autotools gettext-devel gcc
-          pacboy: gtk2 gsl
+          pacboy: gtk2:p gsl:p
       - uses: actions/checkout@v3
       - run: ./bootstrap.sh && ./configure && make
