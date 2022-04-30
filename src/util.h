@@ -29,7 +29,6 @@
 #define ROUND(x, type) ((type) ((x) + (((x) >= 0) ? 0.5 : -0.5)))
 #define TOGGLE(x) ((x) ? FALSE : TRUE)
 
-gdouble log2(gdouble x);
 gint ipow(gint x, guint y);
 gdouble round_digits(gdouble x, guint digits);
 gboolean layout_printf(PangoLayout *layout, const gchar *format, ...);

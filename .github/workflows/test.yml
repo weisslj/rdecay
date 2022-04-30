@@ -1,0 +1,36 @@
+name: Test
+on:
+  push:
+  schedule:
+    - cron: '0 0 1 * *'  # monthly
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+    steps:
+      - run: sudo apt-get install autopoint libgtk2.0-dev
+      - uses: actions/checkout@v3
+      - run: ./bootstrap.sh && ./configure && make
+        env:
+          CC: ${{ matrix.compiler }}
+  macos:
+    runs-on: macos-latest
+    steps:
+      - run: brew install automake gtk+ gsl
+      - uses: actions/checkout@v3
+      - run: ./bootstrap.sh && ./configure && make
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: msys2/setup-msys2@v2
+        with:
+          install: autotools gettext-devel gcc
+          pacboy: gtk2:p gsl:p
+      - uses: actions/checkout@v3
+      - run: ./bootstrap.sh && ./configure && make

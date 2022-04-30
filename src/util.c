@@ -27,12 +27,6 @@
 #include <string.h>
 #include <math.h>
 
-/* berechnet den Zweierlogarithmus von x */
-gdouble log2(gdouble x)
-{
-    return log(x) / G_LN2;
-}
-
 /* setzt den Text eines Pango Layouts wie mit printf */
 gboolean layout_printf(PangoLayout *layout, const gchar *format, ...)
 {

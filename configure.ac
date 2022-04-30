@@ -35,13 +35,13 @@ if test "$GCC" = yes ; then
 fi
 AC_SUBST([WARN_FLAGS])
 AC_PROG_INSTALL
-AM_GNU_GETTEXT
-AM_GNU_GETTEXT_VERSION([0.18])
+AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION([0.19])
 
 # Checks for libraries.
 PKG_CHECK_MODULES([GTK], [gtk+-2.0])
 if test "$platform" = "windows" ; then
-        GTK_CFLAGS="$GTK_CFLAGS -mms-bitfields -mno-cygwin -mwindows"
+        GTK_CFLAGS="$GTK_CFLAGS -mms-bitfields -mwindows"
 fi
 
 PKG_CHECK_MODULES([GSL], [gsl])
@@ -113,7 +113,6 @@ else
 fi
 
 AC_CONFIG_FILES([Makefile
-                 intl/Makefile
                  po/Makefile.in
                  lib/Makefile
                  src/Makefile
